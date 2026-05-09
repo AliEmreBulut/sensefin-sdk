@@ -1,0 +1,34 @@
+## .NET Core
+*.user
+*.suo
+*.userprefs
+*.usertasks
+.vs/
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+[Rr]elease/
+[Dd]ebug/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+
+# NuGet
+*.nuget.props
+*.nuget.targets
+packages/
+
+# Rider
+.idea/
+*.sln.iml
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
