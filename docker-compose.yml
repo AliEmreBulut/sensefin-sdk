@@ -1,0 +1,42 @@
+services:
+  sensefin-db:
+    image: postgres:16-alpine
+    container_name: sensefin-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: sensefin_user
+      POSTGRES_PASSWORD: sensefin_password
+      POSTGRES_DB: sensefin_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  sensefin-cache:
+    image: redis:7-alpine
+    container_name: sensefin-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  sensefin-api:
+    build:
+      context: .
+      dockerfile: src/Presentation/SenseFin.Api/Dockerfile
+    container_name: sensefin-api
+    restart: always
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__PostgreSQL: "Host=sensefin-db;Port=5432;Database=sensefin_db;Username=sensefin_user;Password=sensefin_password"
+      ConnectionStrings__Redis: "sensefin-cache:6379"
+    depends_on:
+      - sensefin-db
+      - sensefin-cache
+
+volumes:
+  postgres_data:
+  redis_data:
