@@ -24,6 +24,7 @@ services:
       dockerfile: src/Presentation/SenseFin.Api/Dockerfile
     container_name: sensefin-api
     restart: always
+    env_file: .env
     ports:
       - "5000:8080"
     environment:
