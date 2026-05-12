@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SenseFin.Application.Interfaces;
+using SenseFin.Infrastructure.AiServices;
 using SenseFin.Infrastructure.Caching;
 using SenseFin.Infrastructure.Persistence;
 using SenseFin.Infrastructure.Persistence.Interceptors;
@@ -55,7 +56,18 @@ public static class DependencyInjection
                 ConnectionMultiplexer.Connect(redisConnectionString));
 
             services.AddSingleton<RedisCacheService>();
+            services.AddSingleton<IVelocityService, RedisVelocityService>();
         }
+
+        // ─── AI Services (Gemini) ────────────────────────────────
+
+        services.AddHttpClient<GeminiRiskAnalystService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+        });
+
+        services.AddScoped<IRiskAnalystService, GeminiRiskAnalystService>();
 
         return services;
     }

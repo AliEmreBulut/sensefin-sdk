@@ -119,6 +119,35 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Atomically increments a counter key. If the key is new, sets the expiry.
+    /// Used for velocity/rate-limiting checks.
+    /// </summary>
+    /// <param name="key">The counter key.</param>
+    /// <param name="expiry">TTL for the key (only set on first increment).</param>
+    /// <returns>The value of the counter after incrementing.</returns>
+    public async Task<long> IncrementAsync(string key, TimeSpan? expiry = null)
+    {
+        try
+        {
+            var newValue = await _database.StringIncrementAsync(key);
+
+            // Set expiry only when the counter is first created (value == 1)
+            if (newValue == 1 && expiry.HasValue)
+            {
+                await _database.KeyExpireAsync(key, expiry.Value);
+            }
+
+            _logger.LogDebug("Redis INCREMENT key '{Key}' = {Value}.", key, newValue);
+            return newValue;
+        }
+        catch (RedisException ex)
+        {
+            _logger.LogWarning(ex, "Redis INCREMENT failed for key '{Key}'.", key);
+            return 0;
+        }
+    }
+
     public void Dispose()
     {
         _connectionMultiplexer?.Dispose();
