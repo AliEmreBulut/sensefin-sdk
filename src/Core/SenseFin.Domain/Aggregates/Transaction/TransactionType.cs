@@ -24,5 +24,8 @@ public enum TransactionType
     PointOfSale = 5,
 
     /// <summary>Cryptocurrency transfer</summary>
-    CryptoTransfer = 6
+    CryptoTransfer = 6,
+
+    /// <summary>Generic transfer (catch-all)</summary>
+    Transfer = 7
 }

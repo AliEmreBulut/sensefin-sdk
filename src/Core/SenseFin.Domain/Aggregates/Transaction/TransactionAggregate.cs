@@ -33,6 +33,9 @@ public sealed class TransactionAggregate : AggregateRoot
     /// <summary>Unique account ID of the receiver.</summary>
     public string ReceiverAccountId { get; private set; } = null!;
 
+    /// <summary>IBAN of the receiver.</summary>
+    public string? ReceiverIban { get; private set; }
+
     // ────────────────── Location ──────────────────
 
     /// <summary>Geographic location of the transaction, if available.</summary>
@@ -50,6 +53,12 @@ public sealed class TransactionAggregate : AggregateRoot
 
     /// <summary>Free-form description or reference note.</summary>
     public string? Description { get; private set; }
+
+    /// <summary>User's typing speed/cadence anomaly score (0-100).</summary>
+    public double? TypingScore { get; private set; }
+
+    /// <summary>Device physical tremor/shake anomaly score (0-100).</summary>
+    public double? TremorScore { get; private set; }
 
     // ────────────────── Constructor ──────────────────
 
@@ -69,7 +78,10 @@ public sealed class TransactionAggregate : AggregateRoot
         string? senderIpAddress = null,
         GeoLocation? location = null,
         string? merchantId = null,
-        string? description = null)
+        string? description = null,
+        string? receiverIban = null,
+        double? typingScore = null,
+        double? tremorScore = null)
     {
         if (string.IsNullOrWhiteSpace(senderDeviceId))
             throw new ArgumentException("SenderDeviceId is required.", nameof(senderDeviceId));
@@ -93,6 +105,9 @@ public sealed class TransactionAggregate : AggregateRoot
             Location = location,
             MerchantId = merchantId,
             Description = description,
+            ReceiverIban = receiverIban,
+            TypingScore = typingScore,
+            TremorScore = tremorScore,
             CreatedAt = DateTime.UtcNow
         };
 
