@@ -19,6 +19,7 @@ public sealed class GeminiRiskAnalystService(
 {
     public async Task<RiskAnalysisResult> AnalyzeAsync(
         TransactionAggregate transaction,
+        string? receiverRiskContext = null,
         CancellationToken cancellationToken = default)
     {
         var apiKey = configuration["Gemini:ApiKey"]
@@ -32,7 +33,7 @@ public sealed class GeminiRiskAnalystService(
 
         var endpoint = $"https://generativelanguage.googleapis.com/{apiVersion}/models/{model}:generateContent?key={apiKey}";
 
-        var prompt = BuildPrompt(transaction);
+        var prompt = BuildPrompt(transaction, receiverRiskContext);
 
         var requestBody = new
         {
@@ -53,65 +54,114 @@ public sealed class GeminiRiskAnalystService(
             }
         };
 
-        try
+        const int maxRetries = 3;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            var json = JsonSerializer.Serialize(requestBody);
-            using var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync(endpoint, content, cancellationToken);
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                logger.LogError(
-                    "Gemini API returned {StatusCode}: {Body}",
-                    response.StatusCode, responseBody);
+                var json = JsonSerializer.Serialize(requestBody);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                return new RiskAnalysisResult(0.5, "AI analysis unavailable — default medium risk assigned.");
+                var response = await httpClient.PostAsync(endpoint, content, cancellationToken);
+                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var isTransient = response.StatusCode is
+                        System.Net.HttpStatusCode.ServiceUnavailable or   // 503
+                        System.Net.HttpStatusCode.TooManyRequests or      // 429
+                        System.Net.HttpStatusCode.BadGateway or           // 502
+                        System.Net.HttpStatusCode.GatewayTimeout;         // 504
+
+                    if (isTransient && attempt < maxRetries)
+                    {
+                        var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt)); // 2s, 4s, 8s
+                        logger.LogWarning(
+                            "Gemini API returned {StatusCode} on attempt {Attempt}/{MaxRetries}. Retrying in {Delay}s...",
+                            response.StatusCode, attempt, maxRetries, delay.TotalSeconds);
+                        await Task.Delay(delay, cancellationToken);
+                        continue;
+                    }
+
+                    logger.LogError(
+                        "Gemini API returned {StatusCode} after {Attempt} attempt(s): {Body}",
+                        response.StatusCode, attempt, responseBody);
+
+                    return new RiskAnalysisResult(0.5, "AI analysis unavailable — default medium risk assigned.");
+                }
+
+                return ParseGeminiResponse(responseBody);
             }
+            catch (TaskCanceledException)
+            {
+                throw; // Don't retry on cancellation
+            }
+            catch (Exception ex)
+            {
+                if (attempt < maxRetries)
+                {
+                    var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                    logger.LogWarning(ex,
+                        "Gemini request failed on attempt {Attempt}/{MaxRetries}. Retrying in {Delay}s...",
+                        attempt, maxRetries, delay.TotalSeconds);
+                    await Task.Delay(delay, cancellationToken);
+                    continue;
+                }
 
-            return ParseGeminiResponse(responseBody);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to invoke Gemini risk analysis for transaction {TransactionId}.",
-                transaction.Id);
+                logger.LogError(ex, "Failed to invoke Gemini risk analysis for transaction {TransactionId} after {MaxRetries} attempts.",
+                    transaction.Id, maxRetries);
 
-            return new RiskAnalysisResult(0.5, $"AI analysis failed: {ex.Message} — default medium risk assigned.");
+                return new RiskAnalysisResult(0.5, $"AI analysis failed: {ex.Message} — default medium risk assigned.");
+            }
         }
+
+        // Should never reach here, but safety net
+        return new RiskAnalysisResult(0.5, "AI analysis exhausted all retries — default medium risk assigned.");
     }
 
     /// <summary>
     /// Builds a structured prompt that instructs Gemini to return a JSON risk assessment.
     /// </summary>
-    private static string BuildPrompt(TransactionAggregate transaction)
+    private static string BuildPrompt(TransactionAggregate transaction, string? receiverRiskContext = null)
     {
+        var ibanSection = string.IsNullOrWhiteSpace(receiverRiskContext)
+            ? ""
+            : $"""
+
+            **⚠️ Alıcı IBAN Risk Geçmişi (Sistemden):**
+            {receiverRiskContext}
+            Bu bilgiyi değerlendirmende mutlaka dikkate al ve reason kısmında alıcı IBAN'ının risk durumunu açıkça belirt.
+            """;
+
         return $$"""
-            You are a financial fraud detection AI analyst. Analyze the following transaction and assess its fraud risk.
+            Sen bir finansal dolandırıcılık tespit yapay zeka analistisin. Aşağıdaki işlemi analiz et ve dolandırıcılık riskini değerlendir.
 
-            **Transaction Details:**
-            - Transaction ID: {{transaction.Id}}
-            - Amount: {{transaction.Money.Amount}} {{transaction.Money.Currency}}
-            - Type: {{transaction.TransactionType}}
-            - Sender Account: {{transaction.SenderAccountId}}
-            - Receiver Account: {{transaction.ReceiverAccountId}}
-            - Receiver IBAN: {{transaction.ReceiverIban ?? "N/A"}}
-            - Sender Device ID: {{transaction.SenderDeviceId}}
-            - Sender IP: {{transaction.SenderIpAddress ?? "N/A"}}
-            - Location: {{transaction.Location?.ToString() ?? "N/A"}}
-            - Merchant: {{transaction.MerchantId ?? "N/A"}}
-            - Description (Important): {{transaction.Description ?? "N/A"}}
-            - Typing Cadence Score (0-100, >60 indicates anomaly): {{transaction.TypingScore?.ToString() ?? "N/A"}}
-            - Device Tremor Score (0-100, >60 indicates anomaly): {{transaction.TremorScore?.ToString() ?? "N/A"}}
-            - Date: {{transaction.TransactionDate:O}}
+            **İşlem Detayları:**
+            - İşlem ID: {{transaction.Id}}
+            - Tutar: {{transaction.Money.Amount}} {{transaction.Money.Currency}}
+            - Tür: {{transaction.TransactionType}}
+            - Gönderen Hesap: {{transaction.SenderAccountId}}
+            - Alıcı Hesap: {{transaction.ReceiverAccountId}}
+            - Alıcı IBAN: {{transaction.ReceiverIban ?? "N/A"}}
+            - Gönderen Cihaz ID: {{transaction.SenderDeviceId}}
+            - Gönderen IP: {{transaction.SenderIpAddress ?? "N/A"}}
+            - Konum: {{transaction.Location?.ToString() ?? "N/A"}}
+            - Üye İşyeri: {{transaction.MerchantId ?? "N/A"}}
+            - Açıklama (Önemli): {{transaction.Description ?? "N/A"}}
+            - Yazım Hızı Puanı (0-100, >60 anomali gösterir): {{transaction.TypingScore?.ToString() ?? "N/A"}}
+            - Cihaz Titreme Puanı (0-100, >60 anomali gösterir): {{transaction.TremorScore?.ToString() ?? "N/A"}}
+            - Tarih: {{transaction.TransactionDate:O}}
+            {{ibanSection}}
 
-            **Instructions:**
-            1. Evaluate the fraud risk on a scale from 0.0 (completely safe) to 1.0 (definitely fraudulent).
-            2. Provide a clear, concise reason for your assessment (1-2 sentences).
-            3. Consider factors like: unusual amount, suspicious sender/receiver patterns, geographic anomalies, device fingerprint, transaction description anomalies, and importantly: physical anomalies like High Tremor Score (e.g., user might be nervous or under coercion) or High Typing Cadence Score (e.g., user is behaving erratically).
+            **Talimatlar:**
+            1. Dolandırıcılık riskini 0.0 (tamamen güvenli) ile 1.0 (kesinlikle dolandırıcılık) arasında bir ölçekte değerlendir.
+            2. Değerlendirmen için net ve kısa bir neden belirt (1-2 cümle). Neden mutlaka TÜRKÇE olmalıdır.
+            3. Şu faktörleri göz önünde bulundur: Olağandışı tutar, şüpheli gönderici/alıcı desenleri, coğrafi anomaliler, cihaz parmak izi, işlem açıklaması anomalileri ve en önemlisi: Yüksek Titreme Puanı (kullanıcı gergin veya baskı altında olabilir) veya Yüksek Yazım Hızı Puanı (kullanıcı düzensiz davranıyor olabilir) gibi fiziksel anomaliler.
+            4. Alıcı IBAN bilgisini mutlaka analiz et. IBAN'ın ülke kodu, banka kodu ve eğer varsa risk geçmişi hakkında yorumda bulun.
 
-            **Response Format (strict JSON only, no markdown):**
-            {"riskScore": 0.0, "reason": "Your explanation here"}
+            **Yanıt Formatı (sadece saf JSON, markdown kullanma):**
+            {"riskScore": 0.0, "reason": "Buraya Türkçe açıklamanı yaz"}
             """;
     }
 

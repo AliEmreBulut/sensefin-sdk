@@ -14,7 +14,7 @@ public interface IRiskAnalystService
     /// <param name="transaction">The transaction aggregate to analyze.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A result containing a numeric score and human-readable reason.</returns>
-    Task<RiskAnalysisResult> AnalyzeAsync(TransactionAggregate transaction, CancellationToken cancellationToken = default);
+    Task<RiskAnalysisResult> AnalyzeAsync(TransactionAggregate transaction, string? receiverRiskContext = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
