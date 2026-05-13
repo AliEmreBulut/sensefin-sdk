@@ -38,6 +38,14 @@ services:
       - sensefin-db
       - sensefin-cache
 
+  sensefin-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: sensefin-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --protocol http2 --url http://sensefin-api:8080
+    depends_on:
+      - sensefin-api
+
 volumes:
   postgres_data:
   redis_data:
