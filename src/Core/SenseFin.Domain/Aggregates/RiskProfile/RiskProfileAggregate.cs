@@ -75,7 +75,8 @@ public sealed class RiskProfileAggregate : AggregateRoot
         // Derive risk level from average score
         CurrentRiskLevel = AverageRiskScore switch
         {
-            >= 80 => RiskLevel.High,
+            >= 80 => RiskLevel.Critical,
+            >= 60 => RiskLevel.High,
             >= 40 => RiskLevel.Medium,
             _ => RiskLevel.Low
         };
