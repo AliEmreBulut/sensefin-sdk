@@ -23,7 +23,7 @@ public sealed class AnalyzeTransactionHandler(
     : IRequestHandler<AnalyzeTransactionCommand, Result<AnalyzeTransactionResponse>>
 {
     private const int VelocityLimit = 5;
-    private const decimal AiThresholdAmount = 5_000m;
+    private const decimal AiThresholdAmount = 3_000m;
 
     public async Task<Result<AnalyzeTransactionResponse>> Handle(
         AnalyzeTransactionCommand request,
@@ -80,15 +80,41 @@ public sealed class AnalyzeTransactionHandler(
         }
         else
         {
-            // ────────────────── Step 3: AI Analysis (Conditional) ──────────────────
+            // ────────────────── Step 3: Receiver IBAN Risk Check ──────────────────
 
-            if (request.Amount > AiThresholdAmount)
+            string? receiverRiskContext = null;
+            var receiverProfile = await riskProfileRepository.GetByAccountIdAsync(
+                request.ReceiverAccountId, cancellationToken);
+
+            if (receiverProfile != null && receiverProfile.CurrentRiskLevel == RiskLevel.Critical)
+            {
+                // Alıcı hesap Critical → AI'ya sormadan direkt %100 riskli
+                logger.LogWarning(
+                    "Receiver {ReceiverAccountId} (IBAN: {ReceiverIban}) is flagged as CRITICAL. Auto-assigning 100% risk.",
+                    request.ReceiverAccountId, request.ReceiverIban);
+
+                riskScore = 100;
+                aiReason = $"Alıcı hesabı ({request.ReceiverAccountId}, IBAN: {request.ReceiverIban ?? "N/A"}) " +
+                           $"sistemde KRİTİK risk seviyesinde işaretlenmiştir (Ortalama Risk: {receiverProfile.AverageRiskScore:F1}, " +
+                           $"Toplam Değerlendirme: {receiverProfile.TotalEvaluations}). İşlem otomatik olarak reddedilmiştir.";
+            }
+            // ────────────────── Step 4: AI Analysis (Conditional) ──────────────────
+            else if (request.Amount > AiThresholdAmount)
             {
                 logger.LogInformation(
                     "High-value transaction ({Amount} {Currency}) — invoking AI risk analysis.",
                     request.Amount, request.Currency);
 
-                var analysisResult = await riskAnalystService.AnalyzeAsync(transaction, cancellationToken);
+                // Alıcının risk geçmişi varsa Gemini'ye bağlam olarak gönder
+                if (receiverProfile != null)
+                {
+                    receiverRiskContext = $"Alıcı hesabın ({request.ReceiverAccountId}) mevcut risk seviyesi: {receiverProfile.CurrentRiskLevel}, " +
+                                          $"Ortalama Risk Skoru: {receiverProfile.AverageRiskScore:F1}/100, " +
+                                          $"Toplam Değerlendirme Sayısı: {receiverProfile.TotalEvaluations}, " +
+                                          $"IBAN: {request.ReceiverIban ?? "N/A"}";
+                }
+
+                var analysisResult = await riskAnalystService.AnalyzeAsync(transaction, receiverRiskContext, cancellationToken);
 
                 // Gemini returns 0.0–1.0, domain uses 0–100
                 riskScore = analysisResult.Score * 100;
@@ -98,7 +124,7 @@ public sealed class AnalyzeTransactionHandler(
             {
                 // Low-value transactions get a baseline score without AI overhead
                 riskScore = 10;
-                aiReason = "Low-value transaction — baseline risk score assigned without AI analysis.";
+                aiReason = "Düşük tutarlı işlem — yapay zeka analizi olmadan temel risk skoru atanmıştır.";
             }
         }
 
@@ -127,12 +153,20 @@ public sealed class AnalyzeTransactionHandler(
 
         // ────────────────── Build Response ──────────────────
 
+        var transactionRiskLevel = riskScore switch
+        {
+            >= 80 => RiskLevel.Critical,
+            >= 60 => RiskLevel.High,
+            >= 40 => RiskLevel.Medium,
+            _ => RiskLevel.Low
+        };
+
         var response = new AnalyzeTransactionResponse(
             TransactionId: transaction.Id,
             RiskScore: riskScore,
-            RiskLevel: riskProfile.CurrentRiskLevel,
+            RiskLevel: transactionRiskLevel,
             AiReason: aiReason,
-            IsHighRisk: riskScore > 60);
+            IsHighRisk: transactionRiskLevel is RiskLevel.High or RiskLevel.Critical);
 
         return Result<AnalyzeTransactionResponse>.Success(response);
     }
