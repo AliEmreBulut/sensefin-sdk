@@ -9,6 +9,5 @@ public sealed record AnalyzeTransactionResponse(
     double RiskScore,
     RiskLevel RiskLevel,
     string AiReason,
-    string UserFriendlyMessage,
     bool IsHighRisk
 );

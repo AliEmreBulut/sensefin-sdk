@@ -253,16 +253,11 @@ public sealed class AnalyzeTransactionHandler(
             _ => RiskLevel.Low
         };
 
-        // Generate user-friendly message for the end user
-        var userFriendlyMessage = GenerateUserFriendlyMessage(
-            transactionRiskLevel, riskScore, request.TransactionType, request.Amount, request.Currency, aiReason);
-
         var response = new AnalyzeTransactionResponse(
             TransactionId: transaction.Id,
             RiskScore: riskScore,
             RiskLevel: transactionRiskLevel,
             AiReason: aiReason,
-            UserFriendlyMessage: userFriendlyMessage,
             IsHighRisk: transactionRiskLevel is RiskLevel.High or RiskLevel.Critical);
 
         return Result<AnalyzeTransactionResponse>.Success(response);
@@ -335,41 +330,6 @@ public sealed class AnalyzeTransactionHandler(
         }
     }
 
-    // Kullanıcıya gösterilecek uyarı mesajları
-
-    // Teknik olmayan kullanıcılar için anlaşılır dilden mesaj üretir
-    private static string GenerateUserFriendlyMessage(
-        RiskLevel riskLevel,
-        double riskScore,
-        TransactionType transactionType,
-        decimal amount,
-        string currency,
-        string aiReason)
-    {
-        string txTypeName = transactionType == TransactionType.PaymentRequest ? "ödeme isteği" : "işlem";
-
-        // Clean up the reason text to make it flow better in the sentence
-        string cleanReason = aiReason
-            .Replace("KARA LİSTE: ", "")
-            .Replace("🚨 ŞÜPHELİ AÇIKLAMA TESPİTİ: ", "")
-            .Replace("🚨 ÖDEME İSTEĞİ DOLANDIRICILIK TESPİTİ: ", "")
-            .Replace("?? ŞÜPHELİ AÇIKLAMA TESPİTİ: ", "")
-            .Replace("?? ÖDEME İSTEĞİ DOLANDIRICILIK TESPİTİ: ", "")
-            .Trim();
-
-        if (riskLevel is RiskLevel.Critical or RiskLevel.High)
-        {
-            return $"🚨 DİKKAT! Bu {txTypeName} %{riskScore:F0} ihtimalle dolandırıcılık riski taşıyor. Sistem şu durumu tespit etti: {cleanReason} Lütfen işlemi onaylamadan önce çok dikkatli olun.";
-        }
-        else if (riskLevel == RiskLevel.Medium)
-        {
-            return $"⚠️ Bu {txTypeName} orta seviyede (%{riskScore:F0}) risk taşıyor. Karşı tarafı gerçekten tanıdığınızdan emin olmadan işleme devam etmeyin.";
-        }
-        else
-        {
-            return $"✅ Bu {txTypeName} güvenli görünüyor (Risk: %{riskScore:F0}). İşleme devam edebilirsiniz.";
-        }
-    }
 
     // Yardımcı metodlar
 
