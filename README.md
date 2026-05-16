@@ -10,10 +10,12 @@ SenseFin is an advanced, AI-powered fraud detection system and mobile SDK backen
 
 ## 🌟 Core Features
 
-- **🧠 Explainable AI Fraud Detection:** Uses Gemini AI to not only score transactions from 0-100 but also provide human-readable explanations (`aiReason`) for the risk assessment.
+- **🧠 Explainable AI Fraud Detection:** Uses Gemini AI to not only score transactions from 0-100 but also provide human-readable explanations (`aiReason`) and `userFriendlyMessage` for the risk assessment.
 - **🛡️ High Security (HMAC-SHA256):** Enforces military-grade authentication between the mobile SDK and the backend. Every API request must be signed with a timestamp and a secret key to prevent man-in-the-middle attacks.
 - **⚡ Velocity & Pattern Caching:** Integrates **Redis** to instantly track transaction velocities (e.g., detecting if an account makes 10 transfers in 1 minute).
-- **🏗️ Domain-Driven Design:** Developed using DDD patterns with distinct Aggregates (Transaction, RiskProfile) and Value Objects.
+- **🏗️ Domain-Driven Design:** Developed using DDD patterns with distinct Aggregates (Transaction, RiskProfile, Blacklist) and Value Objects.
+- **⛔ Account Blacklisting:** An automated and manual blacklist mechanism that flags risky entities (AccountId, DeviceId, IBAN). High-risk transactions can auto-blacklist scammers.
+- **🎣 Social Engineering Detection:** Analyzes transaction descriptions for common scam patterns (e.g., "ödeme isteği", "para kazan"). Automatically flags payment requests with deceptive notes as definite fraud.
 
 ---
 
@@ -66,7 +68,9 @@ The easiest way to start the entire stack (PostgreSQL, Redis, and the SenseFin A
 ```bash
 docker compose up -d
 ```
-The API will be available at `http://localhost:5000`.
+The API will be available locally at `http://localhost:5000`.
+
+**Note on Cloudflare Tunnel:** The `docker-compose.yml` includes a Cloudflare Tunnel container (`sensefin-tunnel`). When running, it automatically exposes the API securely to the internet (without port forwarding) using HTTP/2, which is highly useful for mobile SDK integration.
 
 ### 3. Running Locally (Without Docker API)
 If you prefer to run the API via your IDE (Visual Studio/Rider) but still need the databases:
