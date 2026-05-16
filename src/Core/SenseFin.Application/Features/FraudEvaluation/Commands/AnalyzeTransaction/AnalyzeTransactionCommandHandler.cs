@@ -6,14 +6,8 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Application.Features.FraudEvaluation.Commands.AnalyzeTransaction;
 
-/// <summary>
-/// Handles the AnalyzeTransactionCommand:
-///   1. Creates a Transaction aggregate from the command data.
-///   2. Persists the transaction.
-///   3. Retrieves (or creates) the sender's RiskProfile.
-///   4. Runs risk evaluation rules (skeleton) and records scores.
-///   5. Returns the evaluation result.
-/// </summary>
+// AnalyzeTransactionCommand'ı işleyen handler.
+// İşlemi kaydeder, risk profilini bulur/oluşturur ve risk skorunu hesaplar.
 public sealed class AnalyzeTransactionCommandHandler
     : IRequestHandler<AnalyzeTransactionCommand, AnalyzeTransactionResult>
 {
@@ -39,7 +33,7 @@ public sealed class AnalyzeTransactionCommandHandler
             "Starting transaction analysis for account {SenderAccountId}, amount: {Amount} {Currency}",
             request.SenderAccountId, request.Amount, request.Currency);
 
-        // ─── 1. Build the Transaction Aggregate ────────────────────────────
+        // 1. Transaction Agregasını oluştur
 
         var money = Money.Create(request.Amount, request.Currency);
 
@@ -65,13 +59,13 @@ public sealed class AnalyzeTransactionCommandHandler
             merchantId: request.MerchantId,
             description: request.Description);
 
-        // ─── 2. Persist the Transaction ────────────────────────────────────
+        // 2. İşlemi kaydet
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
 
         _logger.LogInformation("Transaction {TransactionId} persisted.", transaction.Id);
 
-        // ─── 3. Retrieve or Create the RiskProfile ────────────────────────
+        // 3. Risk profilini getir veya oluştur
 
         var riskProfile = await _riskProfileRepository.GetByAccountIdAsync(
             request.SenderAccountId, cancellationToken);
@@ -87,7 +81,7 @@ public sealed class AnalyzeTransactionCommandHandler
             isNewProfile = true;
         }
 
-        // ─── 4. Risk Evaluation (Skeleton) ────────────────────────────────
+        // 4. Risk değerlendirmesi (Taslak)
         //
         //   TODO: Replace this placeholder with actual risk engine calls:
         //     - Rule-based engine (velocity checks, amount thresholds, geo-anomaly)
@@ -108,7 +102,7 @@ public sealed class AnalyzeTransactionCommandHandler
 
         riskProfile.AddRiskScore(scoreEntry);
 
-        // ─── 5. Persist the RiskProfile ───────────────────────────────────
+        // 5. Risk profilini kaydet
 
         if (isNewProfile)
             await _riskProfileRepository.AddAsync(riskProfile, cancellationToken);
@@ -119,7 +113,7 @@ public sealed class AnalyzeTransactionCommandHandler
             "RiskProfile {RiskProfileId} updated. Current level: {RiskLevel}, Average score: {AvgScore:F2}",
             riskProfile.Id, riskProfile.CurrentRiskLevel, riskProfile.AverageRiskScore);
 
-        // ─── 6. Build & Return Result ─────────────────────────────────────
+        // 6. Sonucu dön
 
         bool isFlagged = riskProfile.CurrentRiskLevel >= RiskLevel.High;
 
@@ -136,11 +130,8 @@ public sealed class AnalyzeTransactionCommandHandler
         };
     }
 
-    // ────────────────── Placeholder Risk Heuristics ──────────────────
+    // Örnek risk kuralları (Heuristic)
 
-    /// <summary>
-    /// Preliminary heuristic scoring — will be replaced by actual risk engines.
-    /// </summary>
     private static double CalculatePreliminaryRiskScore(AnalyzeTransactionCommand request)
     {
         double score = 10; // Base score
@@ -166,9 +157,6 @@ public sealed class AnalyzeTransactionCommandHandler
         return Math.Min(score, 100);
     }
 
-    /// <summary>
-    /// Builds a human-readable explanation of the risk score.
-    /// </summary>
     private static string? BuildRiskReason(AnalyzeTransactionCommand request, double score)
     {
         var reasons = new List<string>();

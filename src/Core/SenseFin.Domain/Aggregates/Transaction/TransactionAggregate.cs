@@ -2,72 +2,54 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Domain.Aggregates.Transaction;
 
-/// <summary>
-/// Transaction Aggregate Root — represents a single financial transaction
-/// submitted for fraud analysis. This is the primary entry point for the
-/// risk evaluation pipeline.
-/// </summary>
+// Finansal işlemleri temsil eden Aggregate Root.
+// Dolandırıcılık analizi için ana giriş noktasıdır.
 public sealed class TransactionAggregate : AggregateRoot
 {
-    // ────────────────── Core Fields ──────────────────
+    // Temel bilgiler
 
-    /// <summary>Monetary amount and currency of the transaction.</summary>
     public Money Money { get; private set; } = null!;
 
-    /// <summary>Type/channel of the transaction (e.g., WireTransfer, CardPayment).</summary>
     public TransactionType TransactionType { get; private set; }
 
-    // ────────────────── Device & Session ──────────────────
+    // Cihaz ve oturum bilgileri
 
-    /// <summary>Unique identifier of the sender's device (fingerprint or device ID).</summary>
     public string SenderDeviceId { get; private set; } = null!;
 
-    /// <summary>IP address from which the transaction originated.</summary>
     public string? SenderIpAddress { get; private set; }
 
-    // ────────────────── Account References ──────────────────
+    // Hesap referansları
 
-    /// <summary>Unique account ID of the sender.</summary>
     public string SenderAccountId { get; private set; } = null!;
 
-    /// <summary>Unique account ID of the receiver.</summary>
     public string ReceiverAccountId { get; private set; } = null!;
 
-    /// <summary>IBAN of the receiver.</summary>
     public string? ReceiverIban { get; private set; }
 
-    // ────────────────── Location ──────────────────
+    // Konum bilgisi
 
-    /// <summary>Geographic location of the transaction, if available.</summary>
     public GeoLocation? Location { get; private set; }
 
-    // ────────────────── Timestamps ──────────────────
+    // Zaman damgaları
 
-    /// <summary>Timestamp when the transaction was initiated by the end user.</summary>
     public DateTime TransactionDate { get; private set; }
 
-    // ────────────────── Metadata ──────────────────
+    // Meta veriler
 
-    /// <summary>Optional merchant/vendor identifier for POS or online purchases.</summary>
+
     public string? MerchantId { get; private set; }
 
-    /// <summary>Free-form description or reference note.</summary>
     public string? Description { get; private set; }
 
-    /// <summary>User's typing speed/cadence anomaly score (0-100).</summary>
     public double? TypingScore { get; private set; }
 
-    /// <summary>Device physical tremor/shake anomaly score (0-100).</summary>
     public double? TremorScore { get; private set; }
 
-    // ────────────────── Constructor ──────────────────
+    // Constructor
 
-    /// <summary>EF Core / serialization constructor.</summary>
     private TransactionAggregate() { }
 
-    /// <summary>
-    /// Factory method to create a new Transaction aggregate.
-    /// </summary>
+    // Yeni bir Transaction nesnesi oluşturur
     public static TransactionAggregate Create(
         Money money,
         TransactionType transactionType,
@@ -111,7 +93,7 @@ public sealed class TransactionAggregate : AggregateRoot
             CreatedAt = DateTime.UtcNow
         };
 
-        // Raise domain event for downstream consumers
+        // Domain event fırlat
         transaction.RaiseDomainEvent(new Events.TransactionCreatedEvent(transaction.Id, transaction.TransactionDate));
 
         return transaction;

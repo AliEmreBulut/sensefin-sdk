@@ -2,9 +2,7 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Domain.Aggregates.Transaction;
 
-/// <summary>
-/// Value object representing geographic location data.
-/// </summary>
+// Coğrafi konum verilerini temsil eden Value Object.
 public sealed class GeoLocation : ValueObject
 {
     public double Latitude { get; }

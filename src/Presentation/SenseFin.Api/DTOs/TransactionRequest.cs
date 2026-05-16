@@ -3,9 +3,7 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Api.DTOs;
 
-/// <summary>
-/// Inbound DTO representing a transaction analysis request from the mobile SDK.
-/// </summary>
+// Mobil SDK'dan gelen işlem analizi isteğini temsil eden DTO.
 public sealed record TransactionRequest(
     MoneyDto Money,
     [property: JsonConverter(typeof(JsonStringEnumConverter))]
@@ -23,14 +21,10 @@ public sealed record TransactionRequest(
     double? TremorScore = null
 );
 
-/// <summary>
-/// DTO for monetary amount with ISO 4217 currency code.
-/// </summary>
+// Tutar ve para birimi bilgisi.
 public sealed record MoneyDto(decimal Amount, string Currency);
 
-/// <summary>
-/// DTO for geographic location data.
-/// </summary>
+// Coğrafi konum verisi.
 public sealed record LocationDto(
     double Latitude,
     double Longitude,

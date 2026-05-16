@@ -2,9 +2,7 @@ using SenseFin.Domain.Aggregates.RiskProfile;
 
 namespace SenseFin.Application.Interfaces;
 
-/// <summary>
-/// Repository interface for the RiskProfile aggregate.
-/// </summary>
+// Repository interface for the RiskProfile aggregate.
 public interface IRiskProfileRepository
 {
     Task<RiskProfileAggregate?> GetByAccountIdAsync(string accountId, CancellationToken cancellationToken = default);

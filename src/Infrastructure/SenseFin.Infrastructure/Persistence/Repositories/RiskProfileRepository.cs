@@ -4,9 +4,7 @@ using SenseFin.Domain.Aggregates.RiskProfile;
 
 namespace SenseFin.Infrastructure.Persistence.Repositories;
 
-/// <summary>
-/// EF Core implementation of IRiskProfileRepository.
-/// </summary>
+// IRiskProfileRepository arayüzünün EF Core implementasyonu.
 public sealed class RiskProfileRepository : IRiskProfileRepository
 {
     private readonly SenseFinDbContext _dbContext;

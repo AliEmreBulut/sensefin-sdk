@@ -1,8 +1,6 @@
 namespace SenseFin.Domain.Common;
 
-/// <summary>
-/// Marker interface for domain events.
-/// </summary>
+// Domain event'leri için işaretleyici (marker) arayüz.
 public interface IDomainEvent
 {
     DateTime OccurredOn { get; }

@@ -4,11 +4,8 @@ using System.Text.RegularExpressions;
 
 namespace SenseFin.Api.Middlewares;
 
-/// <summary>
-/// ASP.NET Core middleware that verifies HMAC-SHA256 signatures on incoming requests.
-/// Reads X-SenseFin-Signature and X-SenseFin-Timestamp headers, validates
-/// the signature against the request body, and rejects replay attacks (5-min window).
-/// </summary>
+// Gelen isteklerin HMAC-SHA256 imzalarını kontrol eden middleware.
+// X-SenseFin-Signature ve X-SenseFin-Timestamp header'larını doğrular, replay attackları önler.
 public sealed partial class HmacVerificationMiddleware(
     RequestDelegate next,
     IConfiguration configuration,
@@ -27,7 +24,7 @@ public sealed partial class HmacVerificationMiddleware(
             return;
         }
 
-        // ─── 1. Extract headers ───────────────────────────────────────
+        // 1. Header'ları ayıkla
 
         if (!context.Request.Headers.TryGetValue(SignatureHeader, out var signatureValues) ||
             string.IsNullOrWhiteSpace(signatureValues.FirstOrDefault()))
@@ -50,7 +47,7 @@ public sealed partial class HmacVerificationMiddleware(
         var receivedSignature = signatureValues.First()!;
         var timestampString = timestampValues.First()!;
 
-        // ─── 2. Replay attack protection ──────────────────────────────
+        // 2. Replay attack koruması (Zaman damgası kontrolü)
 
         if (!long.TryParse(timestampString, out var timestampUnix))
         {
@@ -73,7 +70,7 @@ public sealed partial class HmacVerificationMiddleware(
             return;
         }
 
-        // ─── 3. Read request body (enable buffering so Controller can re-read) ─
+        // 3. Request body'sini oku (Controller da okuyabilsin diye buffer'ı aç)
 
         context.Request.EnableBuffering();
 
@@ -83,7 +80,7 @@ public sealed partial class HmacVerificationMiddleware(
         // Reset the stream position so downstream middleware/controllers can read it again
         context.Request.Body.Position = 0;
 
-        // ─── 4. Compute & compare HMAC-SHA256 ────────────────────────
+        // 4. HMAC-SHA256 hesapla ve karşılaştır
 
         var secretKey = configuration["HmacSettings:SecretKey"]
             ?? throw new InvalidOperationException("HmacSettings:SecretKey is not configured.");
@@ -110,7 +107,7 @@ public sealed partial class HmacVerificationMiddleware(
 
         logger.LogDebug("HMAC verification passed for {Path}.", context.Request.Path);
 
-        // ─── 5. Continue pipeline ────────────────────────────────────
+        // 5. Her şey tamamsa devam et
 
         await next(context);
     }

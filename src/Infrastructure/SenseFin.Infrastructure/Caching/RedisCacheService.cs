@@ -3,10 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SenseFin.Infrastructure.Caching;
 
-/// <summary>
-/// Redis cache service providing basic key-value operations.
-/// Uses StackExchange.Redis for connection management.
-/// </summary>
+// Redis üzerinde basit key-value işlemlerini yöneten servis.
 public sealed class RedisCacheService : IDisposable
 {
     private readonly IConnectionMultiplexer _connectionMultiplexer;
@@ -22,9 +19,7 @@ public sealed class RedisCacheService : IDisposable
         _logger = logger;
     }
 
-    /// <summary>
-    /// Gets a cached string value by key.
-    /// </summary>
+    // Belirtilen key'e karşılık gelen değeri getirir
     public async Task<string?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
         try
@@ -39,9 +34,7 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Sets a cached string value with optional TTL.
-    /// </summary>
+    // Key ve value değerini Redis'e yazar, opsiyonel olarak süre (TTL) verilebilir
     public async Task SetAsync(string key, string value, TimeSpan? expiry = null, CancellationToken cancellationToken = default)
     {
         try
@@ -55,9 +48,7 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Removes a cached value by key.
-    /// </summary>
+    // Kaydı Redis'ten siler
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         try
@@ -71,9 +62,7 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Checks if a key exists in the cache.
-    /// </summary>
+    // Key var mı yok mu kontrol eder
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
         try
@@ -87,9 +76,7 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Sets a hash field value (useful for caching complex objects).
-    /// </summary>
+    // Hash yapısında bir alan (field) günceller (kompleks nesneler için ideal)
     public async Task HashSetAsync(string key, string field, string value, CancellationToken cancellationToken = default)
     {
         try
@@ -102,9 +89,7 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Gets a hash field value.
-    /// </summary>
+    // Hash alanındaki değeri çeker
     public async Task<string?> HashGetAsync(string key, string field, CancellationToken cancellationToken = default)
     {
         try
@@ -119,13 +104,8 @@ public sealed class RedisCacheService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Atomically increments a counter key. If the key is new, sets the expiry.
-    /// Used for velocity/rate-limiting checks.
-    /// </summary>
-    /// <param name="key">The counter key.</param>
-    /// <param name="expiry">TTL for the key (only set on first increment).</param>
-    /// <returns>The value of the counter after incrementing.</returns>
+    // Sayacı artırır. Key yeni oluşturuluyorsa süre tanımlar.
+    // Özellikle limit (velocity) kontrollerinde kullanılır.
     public async Task<long> IncrementAsync(string key, TimeSpan? expiry = null)
     {
         try

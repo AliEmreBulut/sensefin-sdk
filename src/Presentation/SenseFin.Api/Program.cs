@@ -17,10 +17,10 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// ─── Infrastructure (EF Core + PostgreSQL + Redis + Repositories + AI) ────
+// Altyapı servislerini (DB, Redis, AI vb.) kaydet
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// ─── MediatR (auto-discover handlers from Application assembly) ──────────
+// MediatR (Handler'ları otomatik bulur)
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssemblyContaining<AnalyzeTransactionHandler>());
 
@@ -38,7 +38,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// ─── HMAC Verification (must come before authorization & controllers) ────
+// HMAC Doğrulama (Controller'lardan önce çalışmalı)
 app.UseMiddleware<HmacVerificationMiddleware>();
 
 app.UseAuthorization();

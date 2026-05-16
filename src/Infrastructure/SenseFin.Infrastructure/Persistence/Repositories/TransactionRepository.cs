@@ -4,9 +4,7 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Infrastructure.Persistence.Repositories;
 
-/// <summary>
-/// EF Core implementation of ITransactionRepository.
-/// </summary>
+// ITransactionRepository arayüzünün EF Core implementasyonu.
 public sealed class TransactionRepository : ITransactionRepository
 {
     private readonly SenseFinDbContext _dbContext;

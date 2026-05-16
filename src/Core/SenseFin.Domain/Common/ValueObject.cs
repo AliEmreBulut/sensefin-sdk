@@ -1,9 +1,7 @@
 namespace SenseFin.Domain.Common;
 
-/// <summary>
-/// Base class for value objects in the domain.
-/// Provides structural equality comparison.
-/// </summary>
+// Domain içindeki Value Object'ler için temel sınıf.
+// Yapısal (structural) eşitlik kontrolü sağlar.
 public abstract class ValueObject
 {
     protected abstract IEnumerable<object?> GetEqualityComponents();

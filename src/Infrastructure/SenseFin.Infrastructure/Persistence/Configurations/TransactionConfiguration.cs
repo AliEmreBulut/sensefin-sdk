@@ -4,23 +4,20 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Infrastructure.Persistence.Configurations;
 
-/// <summary>
-/// EF Core configuration for the Transaction aggregate.
-/// Money and GeoLocation are mapped as Owned Entities.
-/// </summary>
+// Transaction agregası için EF Core konfigürasyonu.
 public sealed class TransactionConfiguration : IEntityTypeConfiguration<TransactionAggregate>
 {
     public void Configure(EntityTypeBuilder<TransactionAggregate> builder)
     {
-        // ─── Table ───────────────────────────────────────────────
+        // Tablo adı
         builder.ToTable("Transactions");
 
-        // ─── Primary Key ─────────────────────────────────────────
+        // PK
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id)
             .ValueGeneratedNever();
 
-        // ─── Money (Owned Entity) ────────────────────────────────
+        // Para birimi ve tutar (Owned entity)
         builder.OwnsOne(t => t.Money, money =>
         {
             money.Property(m => m.Amount)
@@ -35,7 +32,7 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
                 .IsRequired();
         });
 
-        // ─── GeoLocation (Owned Entity, optional) ────────────────
+        // Konum bilgisi (Opsiyonel owned entity)
         builder.OwnsOne(t => t.Location, location =>
         {
             location.Property(l => l.Latitude)
@@ -55,7 +52,7 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
                 .HasMaxLength(200);
         });
 
-        // ─── Scalar Properties ───────────────────────────────────
+        // Özellikler
         builder.Property(t => t.TransactionType)
             .HasConversion<string>()
             .HasMaxLength(50)
@@ -85,13 +82,13 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.Property(t => t.Description)
             .HasMaxLength(500);
 
-        // ─── Audit Fields ────────────────────────────────────────
+        // Denetim alanları
         builder.Property(t => t.CreatedAt)
             .IsRequired();
 
         builder.Property(t => t.UpdatedAt);
 
-        // ─── Indexes ─────────────────────────────────────────────
+        // İndeksler
         builder.HasIndex(t => t.SenderAccountId)
             .HasDatabaseName("IX_Transactions_SenderAccountId");
 
@@ -101,7 +98,7 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.HasIndex(t => t.TransactionDate)
             .HasDatabaseName("IX_Transactions_TransactionDate");
 
-        // ─── Ignore DomainEvents (not persisted) ─────────────────
+        // Domain event'leri hariç tut
         builder.Ignore(t => t.DomainEvents);
     }
 }

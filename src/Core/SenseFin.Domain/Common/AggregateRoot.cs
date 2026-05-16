@@ -1,9 +1,7 @@
 namespace SenseFin.Domain.Common;
 
-/// <summary>
-/// Base class for all aggregate roots in the domain.
-/// Provides domain event management capabilities.
-/// </summary>
+// Tüm agregat kökleri için temel sınıf.
+// Domain event yönetimini sağlar.
 public abstract class AggregateRoot
 {
     private readonly List<IDomainEvent> _domainEvents = [];
@@ -12,9 +10,7 @@ public abstract class AggregateRoot
     public DateTime CreatedAt { get; protected set; }
     public DateTime? UpdatedAt { get; protected set; }
 
-    /// <summary>
-    /// Domain events raised by this aggregate, ready to be dispatched.
-    /// </summary>
+    // Fırlatılan domain event'leri tutar
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     protected void RaiseDomainEvent(IDomainEvent domainEvent)

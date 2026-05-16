@@ -2,45 +2,39 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Domain.Aggregates.RiskProfile;
 
-/// <summary>
-/// RiskProfile Aggregate Root — maintains the cumulative risk state
-/// for a specific account. Each incoming transaction's risk evaluation
-/// adds entries and may update the overall risk level.
-/// </summary>
+// Belirli bir hesap için birikimli risk durumunu tutan Aggregate Root.
+// Her yeni işlem değerlendirmesi buraya eklenir ve genel risk seviyesini günceller.
 public sealed class RiskProfileAggregate : AggregateRoot
 {
     private readonly List<RiskScoreEntry> _riskScores = [];
 
-    // ────────────────── Identity ──────────────────
+    // Kimlik
 
-    /// <summary>The account this risk profile belongs to.</summary>
     public string AccountId { get; private set; } = null!;
 
-    // ────────────────── State ──────────────────
+    // State
 
-    /// <summary>Current overall risk level derived from accumulated scores.</summary>
+    // Current overall risk level derived from accumulated scores.
     public RiskLevel CurrentRiskLevel { get; private set; }
 
-    /// <summary>Running average of all risk scores recorded.</summary>
+    // Running average of all risk scores recorded.
     public double AverageRiskScore { get; private set; }
 
-    /// <summary>Total number of transactions evaluated.</summary>
+    // Total number of transactions evaluated.
     public int TotalEvaluations { get; private set; }
 
-    /// <summary>Timestamp of the last risk evaluation.</summary>
+    // Timestamp of the last risk evaluation.
     public DateTime? LastEvaluatedAt { get; private set; }
 
-    /// <summary>All recorded risk score entries (append-only).</summary>
+    // All recorded risk score entries (append-only).
     public IReadOnlyCollection<RiskScoreEntry> RiskScores => _riskScores.AsReadOnly();
 
-    // ────────────────── Constructor ──────────────────
+    // Constructors
 
-    /// <summary>EF Core / serialization constructor.</summary>
+    // EF Core / serialization için
     private RiskProfileAggregate() { }
 
-    /// <summary>
-    /// Factory method to create a new RiskProfile for an account.
-    /// </summary>
+    // Hesap için yeni bir risk profili oluşturur
     public static RiskProfileAggregate Create(string accountId)
     {
         if (string.IsNullOrWhiteSpace(accountId))
@@ -57,11 +51,9 @@ public sealed class RiskProfileAggregate : AggregateRoot
         };
     }
 
-    // ────────────────── Behavior ──────────────────
+    // Behaviors
 
-    /// <summary>
-    /// Records a new risk score and recalculates the aggregate risk state.
-    /// </summary>
+    // Yeni bir risk skoru ekler ve genel durumu tekrar hesaplar
     public void AddRiskScore(RiskScoreEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);

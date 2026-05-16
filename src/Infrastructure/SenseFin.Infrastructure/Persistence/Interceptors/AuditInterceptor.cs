@@ -4,10 +4,7 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Infrastructure.Persistence.Interceptors;
 
-/// <summary>
-/// EF Core SaveChanges interceptor that automatically populates
-/// CreatedAt and UpdatedAt audit fields on AggregateRoot entities.
-/// </summary>
+// AggregateRoot varlıklarındaki CreatedAt ve UpdatedAt alanlarını otomatik dolduran interceptor.
 public sealed class AuditInterceptor : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(

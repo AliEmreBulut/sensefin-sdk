@@ -2,9 +2,7 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Domain.Aggregates.Transaction;
 
-/// <summary>
-/// Value object representing a monetary amount with currency.
-/// </summary>
+// Para miktarını ve birimini temsil eden Value Object.
 public sealed class Money : ValueObject
 {
     public decimal Amount { get; }
@@ -16,11 +14,7 @@ public sealed class Money : ValueObject
         Currency = currency;
     }
 
-    /// <summary>
-    /// Creates a new Money value object.
-    /// </summary>
-    /// <param name="amount">Transaction amount (must be positive).</param>
-    /// <param name="currency">ISO 4217 currency code (e.g., USD, EUR, TRY).</param>
+    // Yeni bir Money nesnesi oluşturur
     public static Money Create(decimal amount, string currency)
     {
         if (amount <= 0)

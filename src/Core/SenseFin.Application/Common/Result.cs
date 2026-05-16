@@ -1,9 +1,6 @@
 namespace SenseFin.Application.Common;
 
-/// <summary>
-/// Generic Result pattern for returning success/failure from application layer operations.
-/// Eliminates exceptions for control flow and provides explicit error handling.
-/// </summary>
+// Uygulama katmanındaki işlemler için başarı/hata durumunu dönen generic yapı.
 public sealed record Result<T>
 {
     public bool IsSuccess { get; }
@@ -17,13 +14,9 @@ public sealed record Result<T>
         ErrorMessage = errorMessage;
     }
 
-    /// <summary>
-    /// Creates a successful result with a value.
-    /// </summary>
+    // Başarılı sonuç döner
     public static Result<T> Success(T value) => new(true, value, null);
 
-    /// <summary>
-    /// Creates a failure result with an error message.
-    /// </summary>
+    // Hatalı sonuç döner
     public static Result<T> Failure(string errorMessage) => new(false, default, errorMessage);
 }

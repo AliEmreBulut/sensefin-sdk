@@ -2,26 +2,19 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Domain.Aggregates.RiskProfile;
 
-/// <summary>
-/// Value object representing a single risk score entry recorded
-/// against a RiskProfile. Captures the score, source, and timestamp.
-/// </summary>
+// RiskProfile'a kaydedilen tek bir risk skoru kaydını temsil eden Value Object.
+// Skoru, kaynağı ve zaman damgasını tutar.
 public sealed class RiskScoreEntry : ValueObject
 {
-    /// <summary>Numeric risk score (0–100).</summary>
-    public double Score { get; }
+    public double Score { get; } // 0-100 arası risk puanı
 
-    /// <summary>Identifier of the rule/engine that produced this score.</summary>
-    public string Source { get; }
+    public string Source { get; } // Skoru üreten kural veya motorun adı
 
-    /// <summary>Human-readable reason or explanation.</summary>
-    public string? Reason { get; }
+    public string? Reason { get; } // Açıklama metni
 
-    /// <summary>When this score was calculated.</summary>
-    public DateTime EvaluatedAt { get; }
+    public DateTime EvaluatedAt { get; } // Hesaplama zamanı
 
-    /// <summary>Reference to the transaction that triggered this score.</summary>
-    public Guid TransactionId { get; }
+    public Guid TransactionId { get; } // İlgili işlem ID'si
 
     private RiskScoreEntry(double score, string source, Guid transactionId, string? reason, DateTime evaluatedAt)
     {

@@ -4,23 +4,20 @@ using SenseFin.Domain.Aggregates.RiskProfile;
 
 namespace SenseFin.Infrastructure.Persistence.Configurations;
 
-/// <summary>
-/// EF Core configuration for the RiskProfile aggregate.
-/// RiskScoreEntry is mapped as an Owned Collection.
-/// </summary>
+// RiskProfile agregası için EF Core konfigürasyonu.
 public sealed class RiskProfileConfiguration : IEntityTypeConfiguration<RiskProfileAggregate>
 {
     public void Configure(EntityTypeBuilder<RiskProfileAggregate> builder)
     {
-        // ─── Table ───────────────────────────────────────────────
+        // Tablo adı
         builder.ToTable("RiskProfiles");
 
-        // ─── Primary Key ─────────────────────────────────────────
+        // PK
         builder.HasKey(r => r.Id);
         builder.Property(r => r.Id)
             .ValueGeneratedNever();
 
-        // ─── Scalar Properties ───────────────────────────────────
+        // Özellikler
         builder.Property(r => r.AccountId)
             .HasMaxLength(128)
             .IsRequired();
@@ -37,13 +34,13 @@ public sealed class RiskProfileConfiguration : IEntityTypeConfiguration<RiskProf
 
         builder.Property(r => r.LastEvaluatedAt);
 
-        // ─── Audit Fields ────────────────────────────────────────
+        // Denetim alanları
         builder.Property(r => r.CreatedAt)
             .IsRequired();
 
         builder.Property(r => r.UpdatedAt);
 
-        // ─── RiskScores (Owned Collection) ───────────────────────
+        // Risk skorları (Owned collection olarak tutulur)
         builder.OwnsMany(r => r.RiskScores, score =>
         {
             score.ToTable("RiskScoreEntries");
@@ -71,7 +68,7 @@ public sealed class RiskProfileConfiguration : IEntityTypeConfiguration<RiskProf
             score.Property(s => s.TransactionId)
                 .IsRequired();
 
-            // ─── Indexes ─────────────────────────────────────
+            // İndeksler
             score.HasIndex("RiskProfileId")
                 .HasDatabaseName("IX_RiskScoreEntries_RiskProfileId");
 
@@ -79,12 +76,12 @@ public sealed class RiskProfileConfiguration : IEntityTypeConfiguration<RiskProf
                 .HasDatabaseName("IX_RiskScoreEntries_TransactionId");
         });
 
-        // ─── Indexes ─────────────────────────────────────────────
+        // İndeksler
         builder.HasIndex(r => r.AccountId)
             .IsUnique()
             .HasDatabaseName("IX_RiskProfiles_AccountId");
 
-        // ─── Ignore DomainEvents (not persisted) ─────────────────
+        // Domain event'leri veritabanına yansıtma
         builder.Ignore(r => r.DomainEvents);
     }
 }

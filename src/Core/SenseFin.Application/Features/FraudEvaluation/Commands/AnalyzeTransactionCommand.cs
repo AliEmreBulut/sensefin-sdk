@@ -4,10 +4,8 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Application.Features.FraudEvaluation.Commands;
 
-/// <summary>
-/// CQRS Command — represents an incoming transaction analysis request.
-/// Sent from the Presentation layer (Controller) through MediatR.
-/// </summary>
+// CQRS Command — gelen işlem analizi isteğini temsil eder.
+// Controller'dan MediatR aracılığıyla gönderilir.
 public sealed record AnalyzeTransactionCommand(
     decimal Amount,
     string Currency,

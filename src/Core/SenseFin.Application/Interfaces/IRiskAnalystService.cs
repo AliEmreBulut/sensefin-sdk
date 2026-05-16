@@ -2,26 +2,15 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Application.Interfaces;
 
-/// <summary>
-/// Contract for an AI-powered risk analysis service.
-/// Infrastructure layer provides the concrete implementation (e.g., Gemini, OpenAI).
-/// </summary>
+// Yapay zeka destekli risk analizi servisi için arayüz.
+// Infrastructure katmanı bunu Gemini, OpenAI gibi servislerle doldurur.
 public interface IRiskAnalystService
 {
-    /// <summary>
-    /// Analyzes a transaction and returns a risk score with an explanation.
-    /// </summary>
-    /// <param name="transaction">The transaction aggregate to analyze.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A result containing a numeric score and human-readable reason.</returns>
+    // İşlemi analiz eder ve bir risk skoru ile açıklama döner
     Task<RiskAnalysisResult> AnalyzeAsync(TransactionAggregate transaction, string? receiverRiskContext = null, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Represents the output of an AI risk analysis.
-/// Score is normalized between 0.0 (safe) and 1.0 (fraudulent).
-/// Reason provides Explainable AI (XAI) context for the decision.
-/// </summary>
-/// <param name="Score">Risk score between 0.0 and 1.0.</param>
-/// <param name="Reason">Human-readable explanation of the risk assessment.</param>
+// AI risk analizi çıktısı.
+// Score: 0.0 (güvenli) ile 1.0 (dolandırıcılık) arasındadır.
+// Reason: Kararın nedenini açıklayan metin.
 public sealed record RiskAnalysisResult(double Score, string Reason);

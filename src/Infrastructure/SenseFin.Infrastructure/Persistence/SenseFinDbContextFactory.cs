@@ -4,16 +4,13 @@ using Microsoft.Extensions.Configuration;
 
 namespace SenseFin.Infrastructure.Persistence;
 
-/// <summary>
-/// Design-time factory for SenseFinDbContext.
-/// Used by EF Core CLI tools (dotnet ef migrations, dotnet ef database update)
-/// when the runtime DI container is not available.
-/// </summary>
+// Tasarım zamanı (design-time) DbContext factory.
+// Migrations işlemleri için (dotnet ef CLI) kullanılır.
 public sealed class SenseFinDbContextFactory : IDesignTimeDbContextFactory<SenseFinDbContext>
 {
     public SenseFinDbContext CreateDbContext(string[] args)
     {
-        // ─── Build configuration from appsettings ────────────────
+        // appsettings dosyasından yapılandırmayı oku
         //
         // The factory looks for appsettings in the Api (startup) project.
         // When running `dotnet ef` with --startup-project, the working
@@ -28,7 +25,7 @@ public sealed class SenseFinDbContextFactory : IDesignTimeDbContextFactory<Sense
         var connectionString = configuration.GetConnectionString("PostgreSQL")
             ?? "Host=localhost;Port=5432;Database=sensefin_db;Username=sensefin_user;Password=sensefin_password";
 
-        // ─── Build DbContextOptions ──────────────────────────────
+        // DbContextOptions nesnesini oluştur
 
         var optionsBuilder = new DbContextOptionsBuilder<SenseFinDbContext>();
 

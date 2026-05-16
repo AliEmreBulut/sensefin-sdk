@@ -2,9 +2,7 @@ using SenseFin.Domain.Common;
 
 namespace SenseFin.Domain.Events;
 
-/// <summary>
-/// Domain event raised when a new transaction is created.
-/// </summary>
+// Yeni bir işlem oluşturulduğunda fırlatılan domain event.
 public sealed class TransactionCreatedEvent : IDomainEvent
 {
     public Guid TransactionId { get; }

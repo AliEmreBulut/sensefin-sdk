@@ -2,10 +2,8 @@ using SenseFin.Application.Interfaces;
 
 namespace SenseFin.Infrastructure.Caching;
 
-/// <summary>
-/// Redis-backed velocity/rate-limiting service.
-/// Delegates to RedisCacheService for atomic counter operations.
-/// </summary>
+// Redis destekli limit (velocity) kontrol servisi.
+// Sayaç işlemleri için RedisCacheService'i kullanır.
 public sealed class RedisVelocityService(RedisCacheService redisCacheService) : IVelocityService
 {
     public async Task<long> IncrementAsync(string key, TimeSpan window)

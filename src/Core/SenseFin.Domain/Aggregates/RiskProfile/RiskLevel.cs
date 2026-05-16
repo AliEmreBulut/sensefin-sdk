@@ -1,8 +1,6 @@
 namespace SenseFin.Domain.Aggregates.RiskProfile;
 
-/// <summary>
-/// Represents the overall risk classification of an account.
-/// </summary>
+// Hesapların genel risk sınıflandırması.
 public enum RiskLevel
 {
     Low = 0,
