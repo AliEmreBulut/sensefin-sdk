@@ -151,7 +151,7 @@ public sealed class GeminiRiskAnalystService(
 
             **Talimatlar:**
             1. Dolandırıcılık riskini 0.0 (tamamen güvenli) ile 1.0 (kesinlikle dolandırıcılık) arasında bir ölçekte değerlendir.
-            2. Değerlendirmen için net ve kısa bir neden belirt (1-2 cümle). Neden mutlaka TÜRKÇE olmalıdır.
+            2. Değerlendirmen için net, anlaşılır ve basit bir Türkçe ile neden belirt (1-2 cümle). Normal bir vatandaşın anlayabileceği sadelikte olsun. Hukuki sebeplerden dolayı KESİN yargılardan kaçın. "Kanıtlamaktadır", "dolandırıcıdır" gibi kesin hüküm bildiren ifadeler YERİNE "yüksek risk taşımaktadır", "şüpheli görünmektedir", "dolandırıcılık ihtimali bulunmaktadır" gibi daha profesyonel ifadeler kullan.
             3. Şu faktörleri göz önünde bulundur: Olağandışı tutar, şüpheli gönderici/alıcı desenleri, coğrafi anomaliler, cihaz parmak izi, işlem açıklaması anomalileri ve en önemlisi: Yüksek Titreme Puanı (kullanıcı gergin veya baskı altında olabilir) veya Yüksek Yazım Hızı Puanı (kullanıcı düzensiz davranıyor olabilir) gibi fiziksel anomaliler.
             4. Alıcı IBAN bilgisini mutlaka analiz et. IBAN'ın ülke kodu, banka kodu ve eğer varsa risk geçmişi hakkında yorumda bulun.
             5. ÖNEMLİ — ÖDEME İSTEĞİ DOLANDIRICILIK KONTROLÜ: İşlem türü "PaymentRequest" ise bu bir ÖDEME İSTEĞİDİR (gelen para DEĞİLDİR). Kullanıcı onayladığında para KARŞI TARAFA gider. Açıklamada "para yatacak", "hesabınıza gelecek", "onaylayın", "iade", "kazandınız" gibi yanıltıcı ifadeler varsa bu KESİNLİKLE bir sosyal mühendislik dolandırıcılığıdır ve risk skoru 0.95+ olmalıdır. Açıklama ile işlem yönü arasındaki çelişkiyi mutlaka belirt.
