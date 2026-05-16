@@ -1,17 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using SenseFin.Domain.Aggregates.Blacklist;
 using SenseFin.Domain.Aggregates.RiskProfile;
 using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Infrastructure.Persistence;
 
-/// <summary>
-/// Main EF Core DbContext for SenseFin.
-/// Configured for PostgreSQL via Npgsql provider.
-/// </summary>
+// SenseFin ana veritabanı bağlamı (PostgreSQL).
 public sealed class SenseFinDbContext : DbContext
 {
     public DbSet<TransactionAggregate> Transactions => Set<TransactionAggregate>();
     public DbSet<RiskProfileAggregate> RiskProfiles => Set<RiskProfileAggregate>();
+    public DbSet<BlacklistedAccount> BlacklistedAccounts => Set<BlacklistedAccount>();
 
     public SenseFinDbContext(DbContextOptions<SenseFinDbContext> options)
         : base(options)
@@ -22,7 +21,7 @@ public sealed class SenseFinDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Apply all IEntityTypeConfiguration implementations from this assembly
+        // Bu assembly içindeki tüm konfigürasyonları uygula
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SenseFinDbContext).Assembly);
     }
 }

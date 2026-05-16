@@ -11,16 +11,14 @@ using StackExchange.Redis;
 
 namespace SenseFin.Infrastructure;
 
-/// <summary>
-/// Extension methods to register all Infrastructure services into the DI container.
-/// </summary>
+// Altyapı servislerini bağımlılık konteynerine (DI) kaydeden extension metotlar.
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // ─── EF Core + PostgreSQL ────────────────────────────────
+        // Veritabanı (PostgreSQL) ayarları
 
         services.AddSingleton<AuditInterceptor>();
 
@@ -41,12 +39,13 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
         });
 
-        // ─── Repositories ────────────────────────────────────────
+        // Repository kayıtları
 
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IRiskProfileRepository, RiskProfileRepository>();
+        services.AddScoped<IBlacklistRepository, BlacklistRepository>();
 
-        // ─── Redis ───────────────────────────────────────────────
+        // Redis ayarları
 
         var redisConnectionString = configuration.GetConnectionString("Redis");
 
@@ -59,7 +58,7 @@ public static class DependencyInjection
             services.AddSingleton<IVelocityService, RedisVelocityService>();
         }
 
-        // ─── AI Services (Gemini) ────────────────────────────────
+        // AI Servisleri (Gemini)
 
         services.AddHttpClient<GeminiRiskAnalystService>(client =>
         {
