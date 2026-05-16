@@ -7,11 +7,8 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Infrastructure.AiServices;
 
-/// <summary>
-/// Google Gemini Pro API integration for AI-powered fraud risk analysis.
-/// Sends structured transaction data as a prompt and parses the risk assessment response.
-/// Implements the Explainable AI (XAI) pattern by extracting a human-readable reason.
-/// </summary>
+// Google Gemini üzerinden dolandırıcılık analizi yapan servis.
+// İşlemi prompt olarak gönderip risk skorunu ve sebebini geri alır.
 public sealed class GeminiRiskAnalystService(
     HttpClient httpClient,
     IConfiguration configuration,
@@ -120,9 +117,7 @@ public sealed class GeminiRiskAnalystService(
         return new RiskAnalysisResult(0.5, "AI analysis exhausted all retries — default medium risk assigned.");
     }
 
-    /// <summary>
-    /// Builds a structured prompt that instructs Gemini to return a JSON risk assessment.
-    /// </summary>
+    // Gemini'ye gönderilecek prompt'u hazırlar. JSON formatında cevap ister.
     private static string BuildPrompt(TransactionAggregate transaction, string? receiverRiskContext = null)
     {
         var ibanSection = string.IsNullOrWhiteSpace(receiverRiskContext)
@@ -140,7 +135,7 @@ public sealed class GeminiRiskAnalystService(
             **İşlem Detayları:**
             - İşlem ID: {{transaction.Id}}
             - Tutar: {{transaction.Money.Amount}} {{transaction.Money.Currency}}
-            - Tür: {{transaction.TransactionType}}
+            - Tür: {{transaction.TransactionType}}{{(transaction.TransactionType == TransactionType.PaymentRequest ? " ⚠️ (ÖDEME İSTEĞİ — onaylandığında para KARŞI TARAFA gider!)" : "")}}
             - Gönderen Hesap: {{transaction.SenderAccountId}}
             - Alıcı Hesap: {{transaction.ReceiverAccountId}}
             - Alıcı IBAN: {{transaction.ReceiverIban ?? "N/A"}}
@@ -159,16 +154,14 @@ public sealed class GeminiRiskAnalystService(
             2. Değerlendirmen için net ve kısa bir neden belirt (1-2 cümle). Neden mutlaka TÜRKÇE olmalıdır.
             3. Şu faktörleri göz önünde bulundur: Olağandışı tutar, şüpheli gönderici/alıcı desenleri, coğrafi anomaliler, cihaz parmak izi, işlem açıklaması anomalileri ve en önemlisi: Yüksek Titreme Puanı (kullanıcı gergin veya baskı altında olabilir) veya Yüksek Yazım Hızı Puanı (kullanıcı düzensiz davranıyor olabilir) gibi fiziksel anomaliler.
             4. Alıcı IBAN bilgisini mutlaka analiz et. IBAN'ın ülke kodu, banka kodu ve eğer varsa risk geçmişi hakkında yorumda bulun.
+            5. ÖNEMLİ — ÖDEME İSTEĞİ DOLANDIRICILIK KONTROLÜ: İşlem türü "PaymentRequest" ise bu bir ÖDEME İSTEĞİDİR (gelen para DEĞİLDİR). Kullanıcı onayladığında para KARŞI TARAFA gider. Açıklamada "para yatacak", "hesabınıza gelecek", "onaylayın", "iade", "kazandınız" gibi yanıltıcı ifadeler varsa bu KESİNLİKLE bir sosyal mühendislik dolandırıcılığıdır ve risk skoru 0.95+ olmalıdır. Açıklama ile işlem yönü arasındaki çelişkiyi mutlaka belirt.
 
             **Yanıt Formatı (sadece saf JSON, markdown kullanma):**
             {"riskScore": 0.0, "reason": "Buraya Türkçe açıklamanı yaz"}
             """;
     }
 
-    /// <summary>
-    /// Parses the Gemini API response to extract riskScore and reason fields.
-    /// Falls back to a medium risk score if parsing fails.
-    /// </summary>
+    // Gelen JSON cevabını parçalayıp skor ve sebebi ayıklar.
     private RiskAnalysisResult ParseGeminiResponse(string responseBody)
     {
         try

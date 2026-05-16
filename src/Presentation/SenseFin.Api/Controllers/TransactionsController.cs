@@ -5,23 +5,16 @@ using SenseFin.Application.Features.FraudEvaluation.Commands;
 
 namespace SenseFin.Api.Controllers;
 
-/// <summary>
-/// API controller for transaction fraud analysis operations.
-/// Receives transaction data from the mobile SDK and delegates to the CQRS pipeline.
-/// </summary>
+// İşlem dolandırıcılık analizi işlemlerini yöneten controller.
+// Mobil SDK'dan gelen verileri CQRS pipeline'ına yönlendirir.
 [ApiController]
 [Route("api/transactions")]
 public sealed class TransactionsController(
     IMediator mediator,
     ILogger<TransactionsController> logger) : ControllerBase
 {
-    /// <summary>
-    /// Analyzes a transaction for potential fraud using the Sense-Fin pipeline.
-    /// Pipeline: Persist → Velocity Check → AI Analysis → Risk Profile Update.
-    /// </summary>
-    /// <param name="request">Transaction data from the mobile SDK.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Risk assessment result including AI explanation.</returns>
+    // Mobil SDK'dan gelen işlemleri analiz eder.
+    // Akış: Kayıt -> Limit Kontrolü -> AI Analizi -> Risk Profil Güncelleme.
     [HttpPost("analyze")]
     [ProducesResponseType(typeof(AnalyzeTransactionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
