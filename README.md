@@ -121,22 +121,25 @@ console.log("Signed Data: " + dataToSign);
 3. **Body (Raw JSON):**
 ```json
 {
-  "senderAccountId": "TR-ALI-123",
-  "receiverAccountId": "TR-MERT-456",
+  "senderAccountId": "TR-VICTIM-9988",
+  "receiverAccountId": "TR-SELLER-1020",
   "money": { 
-    "amount": 15000.00, 
+    "amount": 25000.00, 
     "currency": "TRY" 
   },
-  "transactionType": 0,
-  "senderDeviceId": "Mobile-Device-XYZ",
-  "senderIpAddress": "176.234.12.34",
+  "transactionType": "PaymentRequest",
+  "senderDeviceId": "DEV-IPHONE-14-PRO",
+  "senderIpAddress": "85.105.12.34",
   "location": { 
-    "latitude": 38.42, 
-    "longitude": 27.14, 
+    "latitude": 41.0082, 
+    "longitude": 28.9784, 
     "country": "TR", 
-    "city": "Izmir" 
+    "city": "Istanbul" 
   },
-  "description": "security test"
+  "description": "Ödülünüz hesabınıza yatacaktır, lütfen işlemi onaylayın.",
+  "receiverIban": "TR330006100519786457841111",
+  "typingScore": 85.5,
+  "tremorScore": 72.3
 }
 ```
 

@@ -359,11 +359,11 @@ public sealed class AnalyzeTransactionHandler(
 
         if (riskLevel is RiskLevel.Critical or RiskLevel.High)
         {
-            return $"🚨 DİKKAT! Bu {txTypeName}, sistem tarafından tespit edilen riskler ({cleanReason}) nedeniyle %{riskScore:F0} dolandırıcılık ihtimali taşımaktadır. İşlemi yapmadan önce lütfen dikkatli olunuz.";
+            return $"🚨 DİKKAT! Bu {txTypeName} %{riskScore:F0} ihtimalle dolandırıcılık riski taşıyor. Sistem şu durumu tespit etti: {cleanReason} Lütfen işlemi onaylamadan önce çok dikkatli olun.";
         }
         else if (riskLevel == RiskLevel.Medium)
         {
-            return $"⚠️ Bu {txTypeName} %{riskScore:F0} oranında risk taşıyor. Lütfen işlemi onaylamadan önce karşı tarafı tanıdığınızdan kesinlikle emin olun.";
+            return $"⚠️ Bu {txTypeName} orta seviyede (%{riskScore:F0}) risk taşıyor. Karşı tarafı gerçekten tanıdığınızdan emin olmadan işleme devam etmeyin.";
         }
         else
         {
