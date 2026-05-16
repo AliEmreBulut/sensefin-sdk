@@ -1,0 +1,255 @@
+{
+  "info": {
+    "name": "SenseFin - Ödeme İsteği Dolandırıcılık Testi",
+    "description": "Ödeme isteği dolandırıcılık korumasını test eden Postman koleksiyonu.\n\nHer request'te Pre-request Script otomatik HMAC imzası oluşturur.\n\nTest Senaryoları:\n1. Dolandırıcılık - PaymentRequest + yanıltıcı açıklama (risk: 98)\n2. Normal PaymentRequest - temiz açıklama (AI'ya gider)\n3. Normal Transfer + şüpheli açıklama (risk: 85)\n4. Normal düşük tutarlı güvenli transfer (risk: 10)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "hmac_secret",
+      "value": "SenseFin_Dev_Secret_2026",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ── HMAC-SHA256 Signature Generator ──",
+          "const secret = pm.collectionVariables.get('hmac_secret');",
+          "const body = pm.request.body.raw;",
+          "const timestamp = Math.floor(Date.now() / 1000).toString();",
+          "",
+          "// Strip all whitespace to match middleware behavior",
+          "const normalizedBody = body.replace(/\\s/g, '');",
+          "const payload = normalizedBody + '.' + timestamp;",
+          "",
+          "const signature = CryptoJS.HmacSHA256(payload, secret);",
+          "const signatureBase64 = CryptoJS.enc.Base64.stringify(signature);",
+          "",
+          "pm.request.headers.upsert({ key: 'X-SenseFin-Signature', value: signatureBase64 });",
+          "pm.request.headers.upsert({ key: 'X-SenseFin-Timestamp', value: timestamp });",
+          "",
+          "console.log('HMAC Payload:', payload);",
+          "console.log('HMAC Signature:', signatureBase64);",
+          "console.log('Timestamp:', timestamp);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. 🔴 Dolandırıcılık - PaymentRequest + Yanıltıcı Açıklama",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Risk skoru >= 90 olmalı (dolandırıcılık)', () => {",
+              "    pm.expect(json.riskScore).to.be.at.least(90);",
+              "});",
+              "",
+              "pm.test('IsHighRisk true olmalı', () => {",
+              "    pm.expect(json.isHighRisk).to.be.true;",
+              "});",
+              "",
+              "pm.test('Reason dolandırıcılık uyarısı içermeli', () => {",
+              "    pm.expect(json.aiReason).to.include('ÖDEME İSTEĞİ');",
+              "});",
+              "",
+              "console.log('Risk Score:', json.riskScore);",
+              "console.log('Risk Level:', json.riskLevel);",
+              "console.log('AI Reason:', json.aiReason);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/transactions/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "transactions", "analyze"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"money\": {\n    \"amount\": 500,\n    \"currency\": \"TRY\"\n  },\n  \"transactionType\": \"PaymentRequest\",\n  \"senderDeviceId\": \"device-victim-001\",\n  \"senderAccountId\": \"victim-account-123\",\n  \"receiverAccountId\": \"scammer-account-456\",\n  \"description\": \"Onayladığınızda hesabınıza para yatacaktır. Lütfen onaylayın.\",\n  \"receiverIban\": \"TR330006100519786457841326\",\n  \"typingScore\": 72,\n  \"tremorScore\": 65\n}"
+        }
+      }
+    },
+    {
+      "name": "2. 🟡 Normal PaymentRequest - Temiz Açıklama",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Risk skoru makul aralıkta', () => {",
+              "    pm.expect(json.riskScore).to.be.within(0, 100);",
+              "});",
+              "",
+              "console.log('Risk Score:', json.riskScore);",
+              "console.log('Risk Level:', json.riskLevel);",
+              "console.log('AI Reason:', json.aiReason);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/transactions/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "transactions", "analyze"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"money\": {\n    \"amount\": 250,\n    \"currency\": \"TRY\"\n  },\n  \"transactionType\": \"PaymentRequest\",\n  \"senderDeviceId\": \"device-user-002\",\n  \"senderAccountId\": \"normal-account-789\",\n  \"receiverAccountId\": \"friend-account-012\",\n  \"description\": \"Kahve parası\",\n  \"receiverIban\": \"TR330006100519786457841999\"\n}"
+        }
+      }
+    },
+    {
+      "name": "3. 🟠 Normal Transfer + Çoklu Şüpheli Açıklama",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Risk skoru >= 80 olmalı (şüpheli açıklama)', () => {",
+              "    pm.expect(json.riskScore).to.be.at.least(80);",
+              "});",
+              "",
+              "pm.test('IsHighRisk true olmalı', () => {",
+              "    pm.expect(json.isHighRisk).to.be.true;",
+              "});",
+              "",
+              "console.log('Risk Score:', json.riskScore);",
+              "console.log('Risk Level:', json.riskLevel);",
+              "console.log('AI Reason:', json.aiReason);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/transactions/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "transactions", "analyze"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"money\": {\n    \"amount\": 1500,\n    \"currency\": \"TRY\"\n  },\n  \"transactionType\": \"WireTransfer\",\n  \"senderDeviceId\": \"device-user-003\",\n  \"senderAccountId\": \"user-account-333\",\n  \"receiverAccountId\": \"suspicious-account-666\",\n  \"description\": \"Kazandınız! Ödülünüz hesabınıza yatacak, onaylayın.\",\n  \"receiverIban\": \"TR330006100519786457841555\"\n}"
+        }
+      }
+    },
+    {
+      "name": "4. 🟢 Güvenli Normal Transfer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Risk skoru düşük olmalı (<= 20)', () => {",
+              "    pm.expect(json.riskScore).to.be.at.most(20);",
+              "});",
+              "",
+              "pm.test('IsHighRisk false olmalı', () => {",
+              "    pm.expect(json.isHighRisk).to.be.false;",
+              "});",
+              "",
+              "console.log('Risk Score:', json.riskScore);",
+              "console.log('Risk Level:', json.riskLevel);",
+              "console.log('AI Reason:', json.aiReason);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/transactions/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "transactions", "analyze"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"money\": {\n    \"amount\": 150,\n    \"currency\": \"TRY\"\n  },\n  \"transactionType\": \"P2PTransfer\",\n  \"senderDeviceId\": \"device-user-004\",\n  \"senderAccountId\": \"safe-account-111\",\n  \"receiverAccountId\": \"friend-account-222\",\n  \"description\": \"Yemek borcu\",\n  \"receiverIban\": \"TR330006100519786457841000\"\n}"
+        }
+      }
+    },
+    {
+      "name": "5. 🔴 Tekrar Dolandırıcılık (Aynı scammer - 2. işlem)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('Risk skoru >= 90 olmalı', () => {",
+              "    pm.expect(json.riskScore).to.be.at.least(90);",
+              "});",
+              "",
+              "console.log('Risk Score:', json.riskScore);",
+              "console.log('AI Reason:', json.aiReason);",
+              "console.log('>>> Bu 2. dolandırıcılık girişimi. scammer-account-456 artık Critical olmalı.');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/transactions/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "transactions", "analyze"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"money\": {\n    \"amount\": 2000,\n    \"currency\": \"TRY\"\n  },\n  \"transactionType\": \"PaymentRequest\",\n  \"senderDeviceId\": \"device-victim-005\",\n  \"senderAccountId\": \"victim-account-999\",\n  \"receiverAccountId\": \"scammer-account-456\",\n  \"description\": \"Geri ödeme yapılacaktır, onaylamanız halinde hesabınıza para yatacaktır.\",\n  \"receiverIban\": \"TR330006100519786457841326\",\n  \"typingScore\": 80,\n  \"tremorScore\": 75\n}"
+        }
+      }
+    }
+  ]
+}
