@@ -90,9 +90,10 @@ public sealed class GeminiRiskAnalystService(
 
                 return ParseGeminiResponse(responseBody);
             }
-            catch (TaskCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                throw; // Don't retry on cancellation
+                logger.LogWarning("Gemini API request was explicitly canceled by the user or system pipeline.");
+                throw; // Retry döngüsüne girmeden doğrudan metottan fırlatır.
             }
             catch (Exception ex)
             {
@@ -119,59 +120,73 @@ public sealed class GeminiRiskAnalystService(
 
     // Gemini'ye gönderilecek prompt'u hazırlar. JSON formatında cevap ister.
     private static string BuildPrompt(TransactionAggregate transaction, string? receiverRiskContext = null)
-    {
-        var ibanSection = string.IsNullOrWhiteSpace(receiverRiskContext)
-            ? ""
-            : $"""
+{
+    var ibanSection = string.IsNullOrWhiteSpace(receiverRiskContext)
+        ? ""
+        : $"""
 
-            **⚠️ Alıcı IBAN Risk Geçmişi (Sistemden):**
-            {receiverRiskContext}
-            Bu bilgiyi değerlendirmende mutlaka dikkate al ve reason kısmında alıcı IBAN'ının risk durumunu açıkça belirt.
-            """;
+        **⚠️ Alıcı IBAN Risk Geçmişi (Sistemden):**
+        {receiverRiskContext}
+        Bu bilgiyi değerlendirmende mutlaka dikkate al ve reason kısmında alıcı IBAN'ının risk durumunu açıkça belirt.
+        """;
 
-        return $$"""
-            Sen bir finansal dolandırıcılık tespit yapay zeka analistisin. Aşağıdaki işlemi analiz et ve dolandırıcılık riskini değerlendir.
+    return $$"""
+        Sen bir finansal dolandırıcılık tespit yapay zeka analistisin. Aşağıdaki işlemi analiz et ve dolandırıcılık riskini değerlendir.
 
-            **İşlem Detayları:**
-            - İşlem ID: {{transaction.Id}}
-            - Tutar: {{transaction.Money.Amount}} {{transaction.Money.Currency}}
-            - Tür: {{transaction.TransactionType}}{{(transaction.TransactionType == TransactionType.PaymentRequest ? " ⚠️ (ÖDEME İSTEĞİ — onaylandığında para KARŞI TARAFA gider!)" : "")}}
-            - Gönderen Hesap: {{transaction.SenderAccountId}}
-            - Alıcı Hesap: {{transaction.ReceiverAccountId}}
-            - Alıcı IBAN: {{transaction.ReceiverIban ?? "N/A"}}
-            - Gönderen Cihaz ID: {{transaction.SenderDeviceId}}
-            - Gönderen IP: {{transaction.SenderIpAddress ?? "N/A"}}
-            - Konum: {{transaction.Location?.ToString() ?? "N/A"}}
-            - Üye İşyeri: {{transaction.MerchantId ?? "N/A"}}
-            - Açıklama (Önemli): {{transaction.Description ?? "N/A"}}
-            - Yazım Hızı Puanı (0-100, >60 anomali gösterir): {{transaction.TypingScore?.ToString() ?? "N/A"}}
-            - Cihaz Titreme Puanı (0-100, >60 anomali gösterir): {{transaction.TremorScore?.ToString() ?? "N/A"}}
-            - Tarih: {{transaction.TransactionDate:O}}
-            {{ibanSection}}
+        **İşlem Detayları:**
+        - İşlem ID: {{transaction.Id}}
+        - Tutar: {{transaction.Money.Amount}} {{transaction.Money.Currency}}
+        - Tür: {{transaction.TransactionType}}{{(transaction.TransactionType == TransactionType.PaymentRequest ? " ⚠️ (ÖDEME İSTEĞİ — onaylandığında para KARŞI TARAFA gider!)" : "")}}
+        - Gönderen Hesap: {{transaction.SenderAccountId}}
+        - Alıcı Hesap: {{transaction.ReceiverAccountId}}
+        - Alıcı IBAN: {{transaction.ReceiverIban ?? "N/A"}}
+        - Gönderen Cihaz ID: {{transaction.SenderDeviceId}}
+        - Gönderen IP: {{transaction.SenderIpAddress ?? "N/A"}}
+        - Konum: {{transaction.Location?.ToString() ?? "N/A"}}
+        - Üye İşyeri: {{transaction.MerchantId ?? "N/A"}}
+        - Açıklama (Önemli): {{transaction.Description ?? "N/A"}}
+        - Yazım Hızı Puanı (0-100, >60 anomali gösterir): {{transaction.TypingScore?.ToString() ?? "N/A"}}
+        - Cihaz Titreme Puanı (0-100, >60 anomali gösterir): {{transaction.TremorScore?.ToString() ?? "N/A"}}
+        - Tarih: {{transaction.TransactionDate:O}}
+        {{ibanSection}}
 
-            **Talimatlar:**
-            1. Dolandırıcılık riskini 0.0 (tamamen güvenli) ile 1.0 (kesinlikle dolandırıcılık) arasında bir ölçekte değerlendir.
-            2. Değerlendirmen için net, anlaşılır ve ÇOK KISA bir Türkçe ile neden belirt. (Maksimum 6 kısa cümle, toplam en fazla 40 kelime olmalı. Mobil uygulamada küçük bir ekrana sığacak). Hukuki sebeplerden dolayı KESİN yargılardan kaçın. "Kanıtlamaktadır", "dolandırıcıdır" gibi kesin hüküm bildiren ifadeler YERİNE "yüksek risk taşımaktadır", "şüpheli görünmektedir", "dolandırıcılık ihtimali bulunmaktadır" gibi ifadeler kullan.
-            3. Şu faktörleri göz önünde bulundur: Olağandışı tutar, şüpheli gönderici/alıcı desenleri, coğrafi anomaliler, cihaz parmak izi, işlem açıklaması anomalileri ve en önemlisi: Yüksek Titreme Puanı (kullanıcı gergin veya baskı altında olabilir) veya Yüksek Yazım Hızı Puanı (kullanıcı düzensiz davranıyor olabilir) gibi fiziksel anomaliler.
-            4. Alıcı IBAN bilgisini mutlaka analiz et. IBAN'ın ülke kodu, banka kodu ve eğer varsa risk geçmişi hakkında yorumda bulun.
-            5. ÖNEMLİ — ÖDEME İSTEĞİ DOLANDIRICILIK KONTROLÜ: İşlem türü "PaymentRequest" ise bu bir ÖDEME İSTEĞİDİR (gelen para DEĞİLDİR). Kullanıcı onayladığında para KARŞI TARAFA gider. 
-               - EĞER açıklamada "para yatacak", "hesabınıza gelecek", "onaylayın", "iade", "kazandınız" gibi yanıltıcı ifadeler varsa bu KESİNLİKLE bir sosyal mühendislik dolandırıcılığıdır ve risk skoru 0.95+ olmalıdır. 
-               - EĞER açıklama mantıklıysa ve ticari bir borç/ödeme (örneğin "inşaat moloz masrafı borcunuz", "kira", "aidat") içeriyorsa tutar yüksek olsa bile direkt dolandırıcılık DEME. Risk skorunu orta seviyede (0.40 - 0.60) tut ve şu uyarıyı mutlaka yap: "Açıklama ve miktar arasında tutarlılık bulunmaktadır, ancak bu bir ÖDEME İSTEĞİDİR. Onaylarsanız para hesabınızdan çıkıp karşı tarafa gidecektir. Lütfen dikkatli olunuz."
+        **Talimatlar:**
+        1. Dolandırıcılık riskini 0.0 (tamamen güvenli) ile 1.0 (kesinlikle dolandırıcılık) arasında bir ölçekte değerlendir.
+        2. Değerlendirmen için net, anlaşılır ve ÇOK KISA bir Türkçe ile neden belirt. (Maksimum 2-3 kısa cümle, toplam en fazla 40 kelime olmalıdır. Mobil uygulamada küçük bir ekrana sığacak). Hukuki sebeplerden dolayı KESİN yargılardan kaçın. "Kanıtlamaktadır", "dolandırıcıdır" gibi kesin hüküm bildiren ifadeler YERİNE "yüksek risk taşımaktadır", "şüpheli görünmektedir", "dolandırıcılık ihtimali bulunmaktadır" gibi esnek ifadeler kullan.
+        3. Şu faktörleri göz önünde bulundur: Olağandışı tutar, şüpheli gönderici/alıcı desenleri, coğrafi anomaliler ve işlem açıklaması. DİKKAT: Yüksek Titreme Puanı veya Yazım Hızı Puanı tek başına KESİN dolandırıcılık kanıtı DEĞİLDİR (kullanıcı sadece aceleci veya hareket halinde olabilir). Bu fiziksel cihaz anomalilerini yalnızca diğer şüpheli durumlarla (yanıltıcı açıklama, gizli IBAN vb.) BİRLEŞTİĞİNDE riski artıran yan faktörler olarak kullan.
+        4. Alıcı IBAN bilgisini mutlaka analiz et. IBAN'ın ülke kodu, banka kodu ve eğer varsa risk geçmişi hakkında yorumda bulun.
+        5. ÖNEMLİ — ÖDEME İSTEĞİ DOLANDIRICILIK KONTROLÜ: İşlem türü "PaymentRequest" ise bu bir ÖDEME İSTEĞİDİR (gelen para DEĞİLDİR). 
+           - SADECE şu durumlarda 0.80+ risk ver: Açıklamada "para yatacak", "hesabınıza gelecek", "iade", "kazandınız" gibi kandırmaca kelimeler varsa VEYA fiziksel cihaz anomalileri (titreme/yazım) yüksekse.
+           - EĞER açıklama sıradan, günlük veya genel bir ödeme/borç talebiyse (örneğin "borcunuzu ödeyin", "kira", "hesap", "inşaat") ve cihaz verileri normalse, SIRF ödeme isteği olduğu için YÜKSEK RİSK VERME. Risk skorunu düşük/orta (0.10 - 0.40) seviyede tut. Sadece şu uyarıyı yap: "Bu bir ÖDEME İSTEĞİDİR. Onaylarsanız hesabınızdan para çıkıp karşı tarafa gidecektir. Lütfen tarafı tanıdığınızdan emin olun."
+        6. ⚠️ ŞİRKET TAKLİDİ / SAHTE TİCARİ KONTROL: Eğer Alıcı Hesap Türü 'BIREYSEL (Şahıs Hesabı)' olarak belirtilmişse, ancak işlem açıklamasında 'sipariş no', 'fatura', 'ürün bedeli', 'ilan no', 'kargo bedeli', 'shopier', 'mağaza' gibi kurumsal/ticari ifadeler geçiyorsa, bu durum kuvvetli bir Şirket Taklidi Dolandırıcılığı (Corporate Impersonation) riskidir. Bu çelişkiyi yakaladığında risk skorunu doğrudan 0.85+ (High) olarak belirle ve reason kısmında 'Açıklamadaki kurumsal ifadeler ile alıcı hesabın bireysel şahıs hesabı olması çelişki ve anomali oluşturmaktadır — sahte mağaza/şirket taklidi dolandırıcılığı ihtimali yüksektir' uyarısını kurumsal, olasılık tabanlı siber güvenlik diliyle yap.
+        7. Eğer para gönderim işlemi varsa açıklamaya bakma sadece karşıdaki kişinin iban risk scoreuna göre değerlendirme yap.
 
-            **Yanıt Formatı (sadece saf JSON, markdown kullanma):**
-            {"riskScore": 0.0, "reason": "Buraya Türkçe açıklamanı yaz"}
-            """;
-    }
+        **🚨 ÇIKTI FORMATI GÜVENCESİ:**
+        - Yalnızca tek bir satırda, ham ve geçerli bir JSON objesi döndür.
+        - Yanıtının başına veya sonuna ```json veya ``` gibi markdown işaretleri ekleme.
+        - JSON içindeki "reason" metninin içinde asla çift tırnak (") kullanma, gerekirse tek tırnak (') kullan. Formatı bozacak hiçbir kaçış karakteri üretme.
+
+        **Yanıt Formatı:**
+        {"riskScore": 0.0, "reason": "Buraya Türkçe açıklamanı yaz"}
+        """;
+}
 
     // Gelen JSON cevabını parçalayıp skor ve sebebi ayıklar.
     private RiskAnalysisResult ParseGeminiResponse(string responseBody)
     {
         try
         {
+
             using var doc = JsonDocument.Parse(responseBody);
             var root = doc.RootElement;
 
             // Navigate: candidates[0].content.parts[0].text
+            var candidate = root.GetProperty("candidates")[0];
+            if (candidate.TryGetProperty("finishReason", out var finishReasonElement) && finishReasonElement.GetString() == "SAFETY")
+            {
+                // Güvenlik filtresini tetikleyen bir açıklama kesinlikle dolandırıcılık şüphesidir!
+                return new RiskAnalysisResult(0.99, "⚠️ AI GÜVENLİK FİLTRESİ TETİKLENDİ: İşlem açıklamasındaki ifadeler sistem tarafından engellendi.");
+            }
             var textContent = root
                 .GetProperty("candidates")[0]
                 .GetProperty("content")
@@ -185,11 +200,15 @@ public sealed class GeminiRiskAnalystService(
                 return new RiskAnalysisResult(0.5, "AI returned empty response — default medium risk assigned.");
             }
 
-            // Clean up potential markdown code fences from the response
-            var cleanedText = textContent
-                .Replace("```json", "")
-                .Replace("```", "")
-                .Trim();
+            // Yapay zekanın ürettiği metinden sadece saf JSON bloğunu çekip çıkarır.
+            var cleanedText = textContent.Trim();
+            var firstCurly = cleanedText.IndexOf('{');
+            var lastCurly = cleanedText.LastIndexOf('}');
+            
+            if (firstCurly != -1 && lastCurly != -1 && lastCurly > firstCurly)
+            {
+                cleanedText = cleanedText.Substring(firstCurly, lastCurly - firstCurly + 1);
+            }
 
             using var resultDoc = JsonDocument.Parse(cleanedText);
             var resultRoot = resultDoc.RootElement;
