@@ -161,7 +161,7 @@ sequenceDiagram
     
     Note over HAND: Run DescriptionFraudStrategy Rules<br/>(Check Semantic Mismatch / Payment Request scams)
 
-    alt [Needs AI Analysis (Amount > 3000 or Payment Request or Suspicious Description)]
+    alt [Needs AI Analysis (Amount > 1000 or Payment Request or Suspicious Description)]
         HAND->>GEMINI: AnalyzeAsync(transaction, receiverRiskContext)
         activate GEMINI
         Note over GEMINI: HTTP Post with Exponential Backoff Retries

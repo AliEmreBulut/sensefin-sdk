@@ -19,7 +19,7 @@ public sealed class AnalyzeTransactionHandler(
     : IRequestHandler<AnalyzeTransactionCommand, Result<AnalyzeTransactionResponse>>
 {
     private const int VelocityLimit = 5;
-    private const decimal AiThresholdAmount = 3_000m;
+    private const decimal AiThresholdAmount = 1_000m;
     private const double AutoBlacklistThreshold = 95;
 
     public async Task<Result<AnalyzeTransactionResponse>> Handle(
