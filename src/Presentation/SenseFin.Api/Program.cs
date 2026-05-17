@@ -26,6 +26,12 @@ builder.Services.AddMediatR(cfg =>
 
 var app = builder.Build();
 
+// Veritabanını oluştur ve örnek verileri yükle
+using (var scope = app.Services.CreateScope())
+{
+    await SenseFin.Infrastructure.Persistence.SenseFinDataSeeder.SeedAsync(scope.ServiceProvider);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

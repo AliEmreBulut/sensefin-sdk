@@ -39,8 +39,8 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
         });
 
-        // Repository kayıtları
-
+        // Unit of Work ve Repository kayıtları
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<SenseFinDbContext>());
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IRiskProfileRepository, RiskProfileRepository>();
         services.AddScoped<IBlacklistRepository, BlacklistRepository>();

@@ -105,28 +105,41 @@ public sealed class RedisCacheService : IDisposable
     }
 
     // Sayacı artırır. Key yeni oluşturuluyorsa süre tanımlar.
-    // Özellikle limit (velocity) kontrollerinde kullanılır.
-    public async Task<long> IncrementAsync(string key, TimeSpan? expiry = null)
+    // LUA Script ile atomik (Race-Condition korumalı) hale getirilmiştir.
+    public async Task<long> IncrementAsync(string key, TimeSpan? expiry = null, CancellationToken cancellationToken = default)
     {
         try
         {
-            var newValue = await _database.StringIncrementAsync(key);
-
-            // Set expiry only when the counter is first created (value == 1)
-            if (newValue == 1 && expiry.HasValue)
+            // Eğer süre (TTL) verilmediyse düz C# artırma yapabiliriz
+            if (!expiry.HasValue)
             {
-                await _database.KeyExpireAsync(key, expiry.Value);
+                return await _database.StringIncrementAsync(key);
             }
 
-            _logger.LogDebug("Redis INCREMENT key '{Key}' = {Value}.", key, newValue);
+            // Claude'un önerdiği Atomik Lua Scripti
+            const string script = @"
+                local current = redis.call('INCR', KEYS[1])
+                if current == 1 then
+                    redis.call('EXPIRE', KEYS[1], ARGV[1])
+                end
+                return current";
+
+            var result = await _database.ScriptEvaluateAsync(script, 
+                new RedisKey[] { key }, 
+                new RedisValue[] { (int)expiry.Value.TotalSeconds });
+
+            long newValue = (long)result;
+            _logger.LogDebug("Redis LUA INCREMENT key '{Key}' = {Value} (TTL: {Seconds}s).", key, newValue, expiry.Value.TotalSeconds);
+            
             return newValue;
         }
         catch (RedisException ex)
         {
-            _logger.LogWarning(ex, "Redis INCREMENT failed for key '{Key}'.", key);
-            return 0;
+            _logger.LogWarning(ex, "Redis LUA INCREMENT failed for key '{Key}'.", key);
+            return 0; // Hata durumunda 0 dönerek fail-safe sağlar
         }
     }
+   
 
     public void Dispose()
     {
