@@ -3,10 +3,12 @@ using SenseFin.Domain.Aggregates.Blacklist;
 using SenseFin.Domain.Aggregates.RiskProfile;
 using SenseFin.Domain.Aggregates.Transaction;
 
+using SenseFin.Application.Interfaces;
+
 namespace SenseFin.Infrastructure.Persistence;
 
 // SenseFin ana veritabanı bağlamı (PostgreSQL).
-public sealed class SenseFinDbContext : DbContext
+public sealed class SenseFinDbContext : DbContext, IUnitOfWork
 {
     public DbSet<TransactionAggregate> Transactions => Set<TransactionAggregate>();
     public DbSet<RiskProfileAggregate> RiskProfiles => Set<RiskProfileAggregate>();

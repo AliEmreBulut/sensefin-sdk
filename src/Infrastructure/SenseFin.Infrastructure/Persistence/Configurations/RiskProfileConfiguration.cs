@@ -34,6 +34,10 @@ public sealed class RiskProfileConfiguration : IEntityTypeConfiguration<RiskProf
 
         builder.Property(r => r.LastEvaluatedAt);
 
+        builder.Property(r => r.IsCorporate)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         // Denetim alanları
         builder.Property(r => r.CreatedAt)
             .IsRequired();
