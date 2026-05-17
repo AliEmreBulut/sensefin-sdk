@@ -25,7 +25,7 @@ public sealed class RiskScoreEntry : ValueObject
         EvaluatedAt = evaluatedAt;
     }
 
-    public static RiskScoreEntry Create(double score, string source, Guid transactionId, string? reason = null)
+    public static RiskScoreEntry Create(double score, string source, Guid transactionId, string? reason = null, DateTime? evaluatedAt = null)
     {
         if (score is < 0 or > 100)
             throw new ArgumentOutOfRangeException(nameof(score), "Score must be between 0 and 100.");
@@ -33,7 +33,7 @@ public sealed class RiskScoreEntry : ValueObject
         if (string.IsNullOrWhiteSpace(source))
             throw new ArgumentException("Source is required.", nameof(source));
 
-        return new RiskScoreEntry(score, source, transactionId, reason, DateTime.UtcNow);
+        return new RiskScoreEntry(score, source, transactionId, reason, evaluatedAt ?? DateTime.UtcNow);
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

@@ -33,6 +33,7 @@ public sealed class TransactionAggregate : AggregateRoot
     // Zaman damgaları
 
     public DateTime TransactionDate { get; private set; }
+    public DateTime Timestamp => TransactionDate;
 
     // Meta veriler
 

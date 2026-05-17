@@ -26,6 +26,9 @@ public sealed class RiskProfileAggregate : AggregateRoot
     // Timestamp of the last risk evaluation.
     public DateTime? LastEvaluatedAt { get; private set; }
 
+    // Hesabın kurumsal (ticari) mi yoksa bireysel (şahıs) mı olduğunu belirtir.
+    public bool IsCorporate { get; private set; }
+
     // All recorded risk score entries (append-only).
     public IReadOnlyCollection<RiskScoreEntry> RiskScores => _riskScores.AsReadOnly();
 
@@ -35,7 +38,7 @@ public sealed class RiskProfileAggregate : AggregateRoot
     private RiskProfileAggregate() { }
 
     // Hesap için yeni bir risk profili oluşturur
-    public static RiskProfileAggregate Create(string accountId)
+    public static RiskProfileAggregate Create(string accountId, bool isCorporate = false)
     {
         if (string.IsNullOrWhiteSpace(accountId))
             throw new ArgumentException("AccountId is required.", nameof(accountId));
@@ -44,6 +47,7 @@ public sealed class RiskProfileAggregate : AggregateRoot
         {
             Id = Guid.NewGuid(),
             AccountId = accountId,
+            IsCorporate = isCorporate,
             CurrentRiskLevel = RiskLevel.Low,
             AverageRiskScore = 0,
             TotalEvaluations = 0,
@@ -75,5 +79,15 @@ public sealed class RiskProfileAggregate : AggregateRoot
 
         LastEvaluatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetRiskLevel(string riskLevelStr)
+    {
+        if (Enum.TryParse<RiskLevel>(riskLevelStr, true, out var parsedLevel))
+        {
+            CurrentRiskLevel = parsedLevel;
+            LastEvaluatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 }
