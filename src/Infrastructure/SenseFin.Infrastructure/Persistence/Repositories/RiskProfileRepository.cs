@@ -22,15 +22,15 @@ public sealed class RiskProfileRepository : IRiskProfileRepository
             .FirstOrDefaultAsync(r => r.AccountId == accountId, cancellationToken);
     }
 
-    public async Task AddAsync(RiskProfileAggregate riskProfile, CancellationToken cancellationToken = default)
+    public Task AddAsync(RiskProfileAggregate riskProfile, CancellationToken cancellationToken = default)
     {
-        await _dbContext.RiskProfiles.AddAsync(riskProfile, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        _dbContext.RiskProfiles.Add(riskProfile);
+        return Task.CompletedTask;
     }
 
-    public async Task UpdateAsync(RiskProfileAggregate riskProfile, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(RiskProfileAggregate riskProfile, CancellationToken cancellationToken = default)
     {
         _dbContext.RiskProfiles.Update(riskProfile);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }

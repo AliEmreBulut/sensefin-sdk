@@ -38,15 +38,15 @@ public sealed class BlacklistRepository(SenseFinDbContext context) : IBlacklistR
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task AddAsync(BlacklistedAccount entry, CancellationToken cancellationToken = default)
+    public Task AddAsync(BlacklistedAccount entry, CancellationToken cancellationToken = default)
     {
-        await context.BlacklistedAccounts.AddAsync(entry, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
+        context.BlacklistedAccounts.Add(entry);
+        return Task.CompletedTask;
     }
 
-    public async Task UpdateAsync(BlacklistedAccount entry, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(BlacklistedAccount entry, CancellationToken cancellationToken = default)
     {
         context.BlacklistedAccounts.Update(entry);
-        await context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }

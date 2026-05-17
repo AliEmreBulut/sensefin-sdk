@@ -20,10 +20,10 @@ public sealed class TransactionRepository : ITransactionRepository
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
-    public async Task AddAsync(TransactionAggregate transaction, CancellationToken cancellationToken = default)
+    public Task AddAsync(TransactionAggregate transaction, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Transactions.AddAsync(transaction, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        _dbContext.Transactions.Add(transaction);
+        return Task.CompletedTask;
     }
 
     public async Task<IReadOnlyList<TransactionAggregate>> GetBySenderAccountAsync(
