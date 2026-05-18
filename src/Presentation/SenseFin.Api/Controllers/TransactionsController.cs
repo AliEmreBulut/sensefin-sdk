@@ -41,6 +41,7 @@ public sealed class TransactionsController(
             City: request.Location?.City,
             MerchantId: request.MerchantId,
             Description: request.Description,
+            SenderIban: request.SenderIban,
             ReceiverIban: request.ReceiverIban,
             TypingScore: request.TypingScore,
             TremorScore: request.TremorScore);

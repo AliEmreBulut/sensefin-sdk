@@ -21,6 +21,7 @@ public sealed record AnalyzeTransactionCommand(
     string? City = null,
     string? MerchantId = null,
     string? Description = null,
+    string? SenderIban = null,
     string? ReceiverIban = null,
     double? TypingScore = null,
     double? TremorScore = null

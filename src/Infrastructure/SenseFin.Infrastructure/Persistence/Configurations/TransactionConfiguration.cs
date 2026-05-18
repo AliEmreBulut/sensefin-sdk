@@ -82,6 +82,12 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.Property(t => t.Description)
             .HasMaxLength(500);
 
+        builder.Property(t => t.SenderIban)
+            .HasMaxLength(34);
+
+        builder.Property(t => t.ReceiverIban)
+            .HasMaxLength(34);
+
         // Denetim alanları
         builder.Property(t => t.CreatedAt)
             .IsRequired();

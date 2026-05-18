@@ -20,8 +20,30 @@ public static class SenseFinDataSeeder
 
         try
         {
-            logger.LogInformation("Veritabanı migration'ları kontrol ediliyor...");
-            await context.Database.MigrateAsync();
+            int retryCount = 0;
+            const int maxRetries = 10;
+            bool connected = false;
+
+            while (!connected && retryCount < maxRetries)
+            {
+                try
+                {
+                    logger.LogInformation("Veritabanı migration'ları kontrol ediliyor... (Deneme {Count}/{Max})", retryCount + 1, maxRetries);
+                    await context.Database.MigrateAsync();
+                    connected = true;
+                }
+                catch (Exception ex)
+                {
+                    retryCount++;
+                    if (retryCount >= maxRetries)
+                    {
+                        logger.LogError(ex, "Veritabanına bağlanılamadı ve migration'lar uygulanamadı. Maksimum deneme sayısı aşıldı.");
+                        throw;
+                    }
+                    logger.LogWarning("Veritabanı henüz hazır değil veya bağlantı kurulamadı. 2 saniye sonra tekrar denenecek... Hata: {Message}", ex.Message);
+                    await Task.Delay(2000);
+                }
+            }
 
             if (await context.RiskProfiles.AnyAsync())
             {

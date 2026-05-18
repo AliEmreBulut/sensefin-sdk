@@ -24,6 +24,8 @@ public sealed class TransactionAggregate : AggregateRoot
 
     public string ReceiverAccountId { get; private set; } = null!;
 
+    public string? SenderIban { get; private set; }
+
     public string? ReceiverIban { get; private set; }
 
     // Konum bilgisi
@@ -64,7 +66,8 @@ public sealed class TransactionAggregate : AggregateRoot
         string? description = null,
         string? receiverIban = null,
         double? typingScore = null,
-        double? tremorScore = null)
+        double? tremorScore = null,
+        string? senderIban = null)
     {
         if (string.IsNullOrWhiteSpace(senderDeviceId))
             throw new ArgumentException("SenderDeviceId is required.", nameof(senderDeviceId));
@@ -88,6 +91,7 @@ public sealed class TransactionAggregate : AggregateRoot
             Location = location,
             MerchantId = merchantId,
             Description = description,
+            SenderIban = senderIban,
             ReceiverIban = receiverIban,
             TypingScore = typingScore,
             TremorScore = tremorScore,

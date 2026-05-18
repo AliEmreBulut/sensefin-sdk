@@ -139,6 +139,7 @@ public sealed class GeminiRiskAnalystService(
         - Tür: {{transaction.TransactionType}}{{(transaction.TransactionType == TransactionType.PaymentRequest ? " ⚠️ (ÖDEME İSTEĞİ — onaylandığında para KARŞI TARAFA gider!)" : "")}}
         - Gönderen Hesap: {{transaction.SenderAccountId}}
         - Alıcı Hesap: {{transaction.ReceiverAccountId}}
+        - Gönderen IBAN: {{transaction.SenderIban ?? "N/A"}}
         - Alıcı IBAN: {{transaction.ReceiverIban ?? "N/A"}}
         - Gönderen Cihaz ID: {{transaction.SenderDeviceId}}
         - Gönderen IP: {{transaction.SenderIpAddress ?? "N/A"}}

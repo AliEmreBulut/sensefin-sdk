@@ -36,7 +36,7 @@ public sealed class AnalyzeTransactionHandler(
             money, request.TransactionType, request.SenderDeviceId, request.SenderAccountId,
             request.ReceiverAccountId, request.TransactionDate, request.SenderIpAddress,
             location, request.MerchantId, request.Description, request.ReceiverIban,
-            request.TypingScore, request.TremorScore);
+            request.TypingScore, request.TremorScore, request.SenderIban);
 
         await transactionRepository.AddAsync(transaction, cancellationToken);
         logger.LogInformation("Transaction {TransactionId} persisted for account {AccountId}.", transaction.Id, request.SenderAccountId);
