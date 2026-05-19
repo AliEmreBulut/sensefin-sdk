@@ -37,9 +37,8 @@ Gemini digests multi-dimensional telemetry, fusing:
 This zero-knowledge fusion creates a cognitive profile that flags anomalous user stress or device takeover (ATO) patterns.
 
 ### 3. Compliant Explainable AI (XAI)
-To satisfy strict banking regulations (such as BDDK in Turkey or GDPR/KVKK in Europe), black-box scoring is unacceptable. Gemini generates a structured, dual-purpose explanation:
-*   `aiReason` *(Technical/Audit):* A deep cryptographic and behavioral justification for security teams.
-*   `userFriendlyMessage` *(Consumer):* A clear, localized warning (e.g., in Turkish) explaining exactly why the transaction is risky, helping the victim realize they are being scammed in real-time.
+To satisfy strict banking regulations (such as BDDK in Turkey or GDPR/KVKK in Europe), black-box scoring is unacceptable. Gemini generates a structured, dual-purpose explanation mapped to the `aiReason` response field:
+*   `aiReason` *(Technical & Consumer):* A clear, localized warning (in Turkish) explaining exactly why the transaction is risky, designed to be displayed on mobile screens to alert the victim in real-time, while also providing necessary context for security audits.
 
 ---
 
