@@ -77,28 +77,4 @@ public static class DescriptionFraudStrategy
     }
 }
 
-// Analiz sonucu
-public sealed record DescriptionFraudResult(
-    bool IsSuspicious,
-    DescriptionFraudConfidence Confidence,
-    string[] MatchedPatterns,
-    double RecommendedRiskScore,
-    string Reason)
-{
-    // Temiz (güvenli) sonuç döndürür
-    public static DescriptionFraudResult Safe() => new(
-        IsSuspicious: false,
-        Confidence: DescriptionFraudConfidence.None,
-        MatchedPatterns: [],
-        RecommendedRiskScore: 0,
-        Reason: string.Empty);
-}
 
-// Tespit güven düzeyi
-public enum DescriptionFraudConfidence
-{
-    None = 0,
-    Moderate = 1,
-    High = 2,
-    Definite = 3
-}

@@ -22,13 +22,3 @@ public sealed record TransactionRequest(
     double? TremorScore = null
 );
 
-// Tutar ve para birimi bilgisi.
-public sealed record MoneyDto(decimal Amount, string Currency);
-
-// Coğrafi konum verisi.
-public sealed record LocationDto(
-    double Latitude,
-    double Longitude,
-    string? Country = null,
-    string? City = null
-);
