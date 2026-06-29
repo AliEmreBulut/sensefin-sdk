@@ -16,11 +16,11 @@ public sealed class BlacklistedAccount
     public DateTime? ExpiresAt { get; private set; }
     public int IncidentCount { get; private set; }
 
-    // Kurucu
+    // Constructor
 
     private BlacklistedAccount() { }
 
-    // Yeni bir kara liste kaydı oluşturmak için fabrika metodu
+    // Yeni bir kara liste kaydı oluşturmak için factory metodu
     public static BlacklistedAccount Create(
         string accountIdentifier,
         BlacklistIdentifierType identifierType,
@@ -47,7 +47,7 @@ public sealed class BlacklistedAccount
         };
     }
 
-    // Tekrar eden dolandırıcılık girişimleri için olay sayısını artırır
+    // Tekrar eden dolandırıcılık girişimleri için event sayısını artırır
     public void IncrementIncident(string? additionalDescription = null)
     {
         IncidentCount++;
@@ -76,21 +76,40 @@ public sealed class BlacklistedAccount
     }
 }
 
+// Kara liste kaydında kullanılan kimlik tipi
 public enum BlacklistIdentifierType
 {
+    /// <summary>A bank account ID.</summary>
     AccountId = 0,
+
+    /// <summary>An IBAN number.</summary>
     Iban = 1,
+
+    /// <summary>A device fingerprint/ID.</summary>
     DeviceId = 2
 }
 
 // Hesabın neden kara listeye alındığının sebebi
 public enum BlacklistReason
 {
-    FraudConfirmed = 0, // Kesinleşmiş dolandırıcılık
-    PaymentRequestScam = 1, // Ödeme isteği dolandırıcılığı
-    IdentityTheft = 2, // Kimlik hırsızlığı
-    MoneyLaundering = 3, // Para aklama şüphesi
-    RepeatedHighRisk = 4, // Sistem tarafından otomatik eklenen (üst üste riskli işlem)
-    Phishing = 5, // Oltalama saldırısı kaynağı
-    ManualReport = 6 // Manuel raporlama
+    /// <summary>Confirmed fraud activity (dolandırıcılık).</summary>
+    FraudConfirmed = 0,
+
+    /// <summary>Payment request scam (ödeme isteği dolandırıcılığı).</summary>
+    PaymentRequestScam = 1,
+
+    /// <summary>Identity theft / account takeover.</summary>
+    IdentityTheft = 2,
+
+    /// <summary>Money laundering suspicion.</summary>
+    MoneyLaundering = 3,
+
+    /// <summary>Repeated high-risk transactions (auto-blacklisted by system).</summary>
+    RepeatedHighRisk = 4,
+
+    /// <summary>Phishing attack source.</summary>
+    Phishing = 5,
+
+    /// <summary>Manually reported by user or admin.</summary>
+    ManualReport = 6
 }

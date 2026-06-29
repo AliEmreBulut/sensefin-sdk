@@ -116,7 +116,7 @@ public sealed class RedisCacheService : IDisposable
                 return await _database.StringIncrementAsync(key);
             }
 
-            // Claude'un önerdiği Atomik Lua Scripti
+            //Atomik Lua Scripti
             const string script = @"
                 local current = redis.call('INCR', KEYS[1])
                 if current == 1 then

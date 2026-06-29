@@ -4,7 +4,7 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Infrastructure.Persistence.Configurations;
 
-// Transaction agregası için EF Core konfigürasyonu.
+// Transaction aggregate'i için EF Core konfigürasyonu
 public sealed class TransactionConfiguration : IEntityTypeConfiguration<TransactionAggregate>
 {
     public void Configure(EntityTypeBuilder<TransactionAggregate> builder)
@@ -81,12 +81,6 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
 
         builder.Property(t => t.Description)
             .HasMaxLength(500);
-
-        builder.Property(t => t.SenderIban)
-            .HasMaxLength(34);
-
-        builder.Property(t => t.ReceiverIban)
-            .HasMaxLength(34);
 
         // Denetim alanları
         builder.Property(t => t.CreatedAt)

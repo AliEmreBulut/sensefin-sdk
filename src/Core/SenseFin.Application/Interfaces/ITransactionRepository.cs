@@ -2,7 +2,7 @@ using SenseFin.Domain.Aggregates.Transaction;
 
 namespace SenseFin.Application.Interfaces;
 
-// Transaction agregası için repository arayüzü.
+// Transaction agregatei için repository arayüzü.
 public interface ITransactionRepository
 {
     Task<TransactionAggregate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
